@@ -40,16 +40,22 @@ phase_packages() {
         ok "Official packages installed"
     fi
 
-    # Install AUR packages (requires paru)
+    # Install paru (AUR helper) if not present
+    if ! command -v paru &>/dev/null; then
+        info "Installing paru (AUR helper)..."
+        local paru_tmp
+        paru_tmp="$(mktemp -d)"
+        git clone https://aur.archlinux.org/paru.git "$paru_tmp/paru"
+        (cd "$paru_tmp/paru" && makepkg -si --noconfirm)
+        rm -rf "$paru_tmp"
+        ok "paru installed"
+    fi
+
+    # Install AUR packages
     if [ -f "$DOTFILES_DIR/packages/aur.txt" ]; then
-        if command -v paru &>/dev/null; then
-            info "Installing AUR packages..."
-            paru -S --needed --noconfirm - < "$DOTFILES_DIR/packages/aur.txt"
-            ok "AUR packages installed"
-        else
-            warn "paru not found. Install paru first, then run:"
-            warn "  paru -S --needed - < $DOTFILES_DIR/packages/aur.txt"
-        fi
+        info "Installing AUR packages..."
+        paru -S --needed --noconfirm - < "$DOTFILES_DIR/packages/aur.txt"
+        ok "AUR packages installed"
     fi
 }
 
