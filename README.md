@@ -47,22 +47,60 @@ Arch Linux (Niri/Wayland) 環境の設定ファイル管理リポジトリ。
 
 ### 新規PCへのインストール
 
+#### 前提: Arch Wiki の Installation Guide で以下を完了させる
+
+```
+1. ライブUSBで起動
+2. パーティション作成
+   - EFI System Partition (ESP)
+   - LUKS 暗号化パーティション → LVM → Btrfs (サブボリューム: @, @home, @snapshots 等)
+3. pacstrap /mnt base linux linux-firmware git vim sudo
+4. genfstab -U /mnt >> /mnt/etc/fstab
+5. arch-chroot /mnt
+6. タイムゾーン・ロケール・ホスト名設定
+7. root パスワード設定
+8. ユーザー作成 + sudo 権限付与
+   useradd -m -G wheel -s /bin/zsh hidenba
+   passwd hidenba
+   visudo  # %wheel ALL=(ALL:ALL) ALL を有効化
+9. GRUB インストール (UEFI)
+   pacman -S grub efibootmgr
+   grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+   # /etc/default/grub は後で install.sh で上書きするので最低限でOK
+   grub-mkconfig -o /boot/grub/grub.cfg
+10. systemd-networkd を有効化 (再起動後にネットワークが使えるように)
+    systemctl enable systemd-networkd systemd-resolved
+    # /etc/systemd/network/20-wired.network を手書き:
+    # [Match]
+    # Name=en*
+    # [Network]
+    # DHCP=yes
+11. reboot → 新システムで起動
+```
+
+#### 再起動後、作成したユーザーでログインして実行
+
 ```bash
-# 1. リポジトリをクローン
-git clone git@github.com:hidenba/dotfiles.git ~/.dotfiles
+# 1. リポジトリをクローン (SSH鍵がまだないのでHTTPS)
+git clone https://github.com/hidenba/dotfiles.git ~/.dotfiles
 
 # 2. インストールスクリプトを実行
 cd ~/.dotfiles
 ./install.sh
+
+# 3. SSH鍵を設定したらリモートをSSHに切り替え
+ssh-keygen -t ed25519
+# → GitHubに公開鍵を登録
+git remote set-url origin git@github.com:hidenba/dotfiles.git
 ```
 
-`install.sh` は5フェーズ構成で、各フェーズ実行前に確認プロンプトが出る:
+#### install.sh の5フェーズ
 
-1. **パッケージ** — pacman + paru(AUR) で一括インストール
-2. **Dotfiles** — `stow --restow` で全パッケージ展開
-3. **システム設定** — `/etc/` へdiff確認付きコピー
+1. **パッケージ** — pacman + paru(AUR) で一括インストール (`base`, `linux` 等も含むが `--needed` なので重複スキップ)
+2. **Dotfiles** — `stow --restow` で全パッケージ展開 (壁紙含む)
+3. **システム設定** — `/etc/` へdiff確認付きコピー + greetd壁紙配置
 4. **サービス** — systemctl enable (bluetooth, docker, greetd, nvidia 等)
-5. **ポストインストール** — mkinitcpio, grub-mkconfig, 手動手順リマインダー
+5. **ポストインストール** — mkinitcpio, grub-mkconfig, 手動手順リマインダー (YubiKey登録, Snapper, fstab, GRUB UUID)
 
 ### 既存環境への適用 (初回)
 
