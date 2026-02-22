@@ -130,6 +130,7 @@ phase_system() {
         "pam.d/greetd"
         "pam.d/polkit-1"
         "systemd/network/20-wired.network"
+        "systemd/system/niri-resume-fix.service"
     )
 
     # Files with hardware-specific UUIDs - show diff but don't auto-copy
@@ -200,6 +201,7 @@ phase_services() {
         "snapper-cleanup.timer"
         "systemd-networkd.service"
         "systemd-resolved.service"
+        "niri-resume-fix.service"
     )
 
     local user_services=(
