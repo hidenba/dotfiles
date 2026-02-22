@@ -51,6 +51,18 @@ phase_packages() {
         ok "paru installed"
     fi
 
+    # Import GPG keys required by AUR packages
+    local gpg_keys=(
+        "3FEF9748469ADBE15DA7CA80AC2D62742012EA22"  # 1Password code signing
+    )
+    for key in "${gpg_keys[@]}"; do
+        if ! gpg --list-keys "$key" &>/dev/null; then
+            info "Importing GPG key: $key"
+            gpg --recv-keys "$key"
+            ok "Imported: $key"
+        fi
+    done
+
     # Install AUR packages
     if [ -f "$DOTFILES_DIR/packages/aur.txt" ]; then
         info "Installing AUR packages..."
