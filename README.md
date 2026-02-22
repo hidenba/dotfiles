@@ -49,33 +49,154 @@ Arch Linux (Niri/Wayland) 環境の設定ファイル管理リポジトリ。
 
 #### 前提: Arch Wiki の Installation Guide で以下を完了させる
 
+##### 1. ライブUSBで起動
+
+##### 2. パーティション作成
+
+現環境のディスク構成:
+
 ```
-1. ライブUSBで起動
-2. パーティション作成
-   - EFI System Partition (ESP)
-   - LUKS 暗号化パーティション → LVM → Btrfs (サブボリューム: @, @home, @snapshots 等)
-3. pacstrap /mnt base linux linux-firmware git vim sudo
-4. genfstab -U /mnt >> /mnt/etc/fstab
-5. arch-chroot /mnt
-6. タイムゾーン・ロケール・ホスト名設定
-7. root パスワード設定
-8. ユーザー作成 + sudo 権限付与
-   useradd -m -G wheel -s /bin/zsh hidenba
-   passwd hidenba
-   visudo  # %wheel ALL=(ALL:ALL) ALL を有効化
-9. GRUB インストール (UEFI)
-   pacman -S grub efibootmgr
-   grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
-   # /etc/default/grub は後で install.sh で上書きするので最低限でOK
-   grub-mkconfig -o /boot/grub/grub.cfg
-10. systemd-networkd を有効化 (再起動後にネットワークが使えるように)
-    systemctl enable systemd-networkd systemd-resolved
-    # /etc/systemd/network/20-wired.network を手書き:
-    # [Match]
-    # Name=en*
-    # [Network]
-    # DHCP=yes
-11. reboot → 新システムで起動
+nvme0n1             931.5G
+├─nvme0n1p1           512M  EFI System Partition  → /boot
+└─nvme0n1p2           931G  LUKS encrypted
+  └─cryptlvm          931G  LVM
+    ├─vg-swap            8G  swap
+    └─vg-root          923G  Btrfs
+```
+
+```bash
+# パーティション作成
+gdisk /dev/nvme0n1
+# n → +512M → ef00 (EFI System Partition)
+# n → 残り全部 → 8309 (Linux LUKS)
+
+# LUKS 暗号化
+cryptsetup luksFormat /dev/nvme0n1p2
+cryptsetup open /dev/nvme0n1p2 cryptlvm
+
+# LVM
+pvcreate /dev/mapper/cryptlvm
+vgcreate vg /dev/mapper/cryptlvm
+lvcreate -L 8G vg -n swap
+lvcreate -l 100%FREE vg -n root
+
+# ファイルシステム
+mkfs.fat -F32 /dev/nvme0n1p1
+mkswap /dev/mapper/vg-swap
+mkfs.btrfs /dev/mapper/vg-root
+```
+
+##### 3. Btrfs サブボリューム作成
+
+```bash
+mount /dev/mapper/vg-root /mnt
+
+btrfs subvolume create /mnt/@
+btrfs subvolume create /mnt/@home
+btrfs subvolume create /mnt/@snapshots
+btrfs subvolume create /mnt/@var_log
+
+umount /mnt
+```
+
+##### 4. マウント
+
+```bash
+# ルート
+mount -o noatime,compress=zstd:3,ssd,space_cache=v2,subvol=@ /dev/mapper/vg-root /mnt
+
+# サブボリューム
+mkdir -p /mnt/{home,.snapshots,var/log,boot}
+mount -o noatime,compress=zstd:3,ssd,space_cache=v2,subvol=@home /dev/mapper/vg-root /mnt/home
+mount -o noatime,compress=zstd:3,ssd,space_cache=v2,subvol=@snapshots /dev/mapper/vg-root /mnt/.snapshots
+mount -o noatime,compress=zstd:3,ssd,space_cache=v2,subvol=@var_log /dev/mapper/vg-root /mnt/var/log
+
+# ESP + swap
+mount /dev/nvme0n1p1 /mnt/boot
+swapon /dev/mapper/vg-swap
+```
+
+##### 5. ベースシステムインストール
+
+```bash
+pacstrap /mnt base linux linux-firmware git vim sudo lvm2 btrfs-progs
+genfstab -U /mnt >> /mnt/etc/fstab
+arch-chroot /mnt
+```
+
+##### 6. 基本設定 (chroot 内)
+
+```bash
+# タイムゾーン
+ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+hwclock --systohc
+
+# ロケール
+sed -i 's/#en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+sed -i 's/#ja_JP.UTF-8/ja_JP.UTF-8/' /etc/locale.gen
+locale-gen
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+
+# ホスト名
+echo "tromania" > /etc/hostname
+
+# root パスワード
+passwd
+```
+
+##### 7. ユーザー作成
+
+```bash
+useradd -m -G wheel -s /bin/zsh hidenba
+passwd hidenba
+visudo  # %wheel ALL=(ALL:ALL) ALL のコメントを外す
+```
+
+##### 8. GRUB インストール (UEFI)
+
+```bash
+pacman -S grub efibootmgr
+grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+
+# 最低限の GRUB 設定 (LUKS 解除に必要)
+# GRUB_CMDLINE_LINUX に rd.luks.name=<UUID>=cryptlvm を設定
+# UUID は blkid /dev/nvme0n1p2 で確認
+vim /etc/default/grub
+grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+> install.sh Phase 3 で `etc/default/grub` を参照できるが、LUKS UUID と `rd.luks.options` (FIDO2) は
+> PC固有なので手動編集が必要。既存の設定をテンプレートとして参考にすること。
+
+##### 9. ネットワーク (systemd-networkd)
+
+```bash
+cat > /etc/systemd/network/20-wired.network << 'EOF'
+[Match]
+Name=en*
+
+[Network]
+DHCP=yes
+EOF
+
+systemctl enable systemd-networkd systemd-resolved
+```
+
+##### 10. initramfs
+
+```bash
+# /etc/mkinitcpio.conf の HOOKS に sd-encrypt と lvm2 を追加:
+# HOOKS=(base systemd autodetect microcode modconf kms keyboard keymap sd-vconsole block sd-encrypt lvm2 filesystems fsck)
+vim /etc/mkinitcpio.conf
+mkinitcpio -P
+```
+
+##### 11. 再起動
+
+```bash
+exit       # chroot を抜ける
+umount -R /mnt
+reboot
 ```
 
 #### 再起動後、作成したユーザーでログインして実行
