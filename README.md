@@ -174,15 +174,16 @@ pamu2fcfg -n >> ~/.config/Yubico/u2f_keys
 
 ## 壁紙
 
-`wallpaper/` ディレクトリに壁紙画像を格納。install.sh が自動配置する。
+`wallpaper/` はStowパッケージとして `~/Pictures/wallpaper/` にシンボリックリンク展開される。
 
-| ファイル | 配置先 | 用途 |
+| ファイル | 展開先 | 用途 |
 |---------|--------|------|
-| `wallpaper.png` | `~/Pictures/wallpaper/` | デスクトップ背景 (swaybg) |
-| `lock_bg.png` | `~/Pictures/wallpaper/` | swaylock ロック画面 |
-| `lock_bg.png` | `/usr/share/backgrounds/` | greetd ログイン画面 (greeterユーザー用) |
+| `wallpaper.png` | `~/Pictures/wallpaper/wallpaper.png` | デスクトップ背景 (swaybg) |
+| `lock_bg.png` | `~/Pictures/wallpaper/lock_bg.png` | swaylock ロック画面 |
 
-壁紙を変更する場合は `wallpaper/` 内のファイルを差し替えてコミットする。
+greetd ログイン画面の壁紙は greeter ユーザーが `~/` にアクセスできないため、install.sh Phase 3 で `/usr/share/backgrounds/lock_bg.png` にコピーする。
+
+壁紙を変更する場合は `wallpaper/Pictures/wallpaper/` 内のファイルを差し替えてコミットする。
 
 ## その他の注意事項
 

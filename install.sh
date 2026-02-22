@@ -2,7 +2,7 @@
 set -euo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
-STOW_PACKAGES=(shell alacritty niri waybar pipewire obs mako fuzzel swaylock xremap fcitx5 wayland-flags git systemd-user scripts)
+STOW_PACKAGES=(shell alacritty niri waybar pipewire obs mako fuzzel swaylock xremap fcitx5 wayland-flags git systemd-user scripts wallpaper)
 
 # Colors
 RED='\033[0;31m'
@@ -88,13 +88,6 @@ phase_dotfiles() {
         ok "Stowed: $pkg"
     done
 
-    # Wallpapers (not Stow-managed, just copy)
-    local wallpaper_dir="$DOTFILES_DIR/wallpaper"
-    if [ -d "$wallpaper_dir" ]; then
-        mkdir -p "$HOME/Pictures/wallpaper"
-        cp "$wallpaper_dir"/*.png "$HOME/Pictures/wallpaper/"
-        ok "Wallpapers copied to ~/Pictures/wallpaper/"
-    fi
 }
 
 # ============================================================
@@ -148,13 +141,13 @@ phase_system() {
     done
 
     # Wallpaper for greetd (greeter user can't access ~/Pictures)
-    local wallpaper_dir="$DOTFILES_DIR/wallpaper"
-    if [ -f "$wallpaper_dir/lock_bg.png" ]; then
+    local lock_bg="$HOME/Pictures/wallpaper/lock_bg.png"
+    if [ -f "$lock_bg" ]; then
         sudo mkdir -p /usr/share/backgrounds
-        if [ -f /usr/share/backgrounds/lock_bg.png ] && diff -q "$wallpaper_dir/lock_bg.png" /usr/share/backgrounds/lock_bg.png &>/dev/null; then
+        if [ -f /usr/share/backgrounds/lock_bg.png ] && diff -q "$lock_bg" /usr/share/backgrounds/lock_bg.png &>/dev/null; then
             ok "Already matches: /usr/share/backgrounds/lock_bg.png"
         else
-            sudo cp "$wallpaper_dir/lock_bg.png" /usr/share/backgrounds/lock_bg.png
+            sudo cp "$lock_bg" /usr/share/backgrounds/lock_bg.png
             ok "Copied: /usr/share/backgrounds/lock_bg.png"
         fi
     fi
