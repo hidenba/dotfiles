@@ -92,8 +92,52 @@ mv ~/.config/newapp/config newapp/.config/newapp/
 stow --target="$HOME" newapp
 ```
 
-## 注意事項
+## YubiKey (FIDO2/U2F) 認証
 
-- `u2f_keys` はセキュリティ上Gitに含めない（新PCで `pamu2fcfg` で再登録）
+YubiKeyタッチによるパスワードレス認証を以下の場面で使用している:
+
+| 場面 | PAM設定 | 振る舞い |
+|------|---------|---------|
+| ログイン (greetd) | `etc/pam.d/greetd` | YubiKeyタッチで認証。未接続時はパスワードにフォールバック |
+| 画面ロック解除 (swaylock) | `etc/pam.d/swaylock` | 同上 |
+| 特権操作 (polkit) | `etc/pam.d/polkit-1` | 同上 |
+
+### PAMの仕組み
+
+```
+auth [success=done default=ignore] pam_u2f.so cue origin=pam://tromania appid=pam://tromania
+auth include system-auth   (or login)
+```
+
+- `[success=done default=ignore]` — YubiKeyタッチ成功で即認証完了。キーが未接続 or タッチしなかった場合は無視して次のルール（パスワード認証）へフォールバック
+- `cue` — "Please touch the device" プロンプトを表示
+- `origin` / `appid` — ホスト名ベース (`pam://tromania`)。新PCではホスト名に合わせて書き換える
+
+### 新規PCでのセットアップ手順
+
+```bash
+# 1. パッケージインストール (install.shのPhase 1で入る)
+sudo pacman -S pam-u2f
+
+# 2. YubiKeyを挿してキーを登録
+mkdir -p ~/.config/Yubico
+pamu2fcfg > ~/.config/Yubico/u2f_keys
+
+# 3. バックアップキーを追加登録する場合
+pamu2fcfg -n >> ~/.config/Yubico/u2f_keys
+
+# 4. PAM設定のホスト名を書き換え (ホスト名が異なる場合)
+# etc/pam.d/ 内の origin=pam://tromania appid=pam://tromania を
+# 新ホスト名に置換してから install.sh Phase 3 でコピー
+```
+
+### セキュリティ上の注意
+
+- `~/.config/Yubico/u2f_keys` はデバイス固有の公開鍵情報を含むため **Gitに含めない** (`.gitignore`済み)
+- 新PCでは必ず `pamu2fcfg` で再登録が必要
+- YubiKey紛失時にロックアウトされないよう、フォールバック(パスワード認証)を維持している
+
+## その他の注意事項
+
 - `fstab`, `grub` のUUIDはPC固有 → install.shではスキップ、手動設定
 - OBSのシーン/プロファイルは追跡しない（ランタイム状態）
