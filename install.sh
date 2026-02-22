@@ -87,6 +87,14 @@ phase_dotfiles() {
         stow --restow --target="$HOME" "$pkg"
         ok "Stowed: $pkg"
     done
+
+    # Wallpapers (not Stow-managed, just copy)
+    local wallpaper_dir="$DOTFILES_DIR/wallpaper"
+    if [ -d "$wallpaper_dir" ]; then
+        mkdir -p "$HOME/Pictures/wallpaper"
+        cp "$wallpaper_dir"/*.png "$HOME/Pictures/wallpaper/"
+        ok "Wallpapers copied to ~/Pictures/wallpaper/"
+    fi
 }
 
 # ============================================================
@@ -138,6 +146,18 @@ phase_system() {
             fi
         fi
     done
+
+    # Wallpaper for greetd (greeter user can't access ~/Pictures)
+    local wallpaper_dir="$DOTFILES_DIR/wallpaper"
+    if [ -f "$wallpaper_dir/lock_bg.png" ]; then
+        sudo mkdir -p /usr/share/backgrounds
+        if [ -f /usr/share/backgrounds/lock_bg.png ] && diff -q "$wallpaper_dir/lock_bg.png" /usr/share/backgrounds/lock_bg.png &>/dev/null; then
+            ok "Already matches: /usr/share/backgrounds/lock_bg.png"
+        else
+            sudo cp "$wallpaper_dir/lock_bg.png" /usr/share/backgrounds/lock_bg.png
+            ok "Copied: /usr/share/backgrounds/lock_bg.png"
+        fi
+    fi
 
     echo ""
     warn "=== Manual review required (hardware-specific UUIDs) ==="
@@ -218,8 +238,7 @@ phase_postinstall() {
     echo "  2. Configure Snapper:         sudo snapper -c root create-config /"
     echo "  3. Set up fstab:              sudo vi /etc/fstab"
     echo "  4. Update GRUB UUIDs:         sudo vi /etc/default/grub && sudo grub-mkconfig -o /boot/grub/grub.cfg"
-    echo "  5. Copy wallpapers:           ~/Pictures/wallpaper/"
-    echo "  6. Log in to apps:            Chrome, Slack, 1Password, etc."
+    echo "  5. Log in to apps:            Chrome, Slack, 1Password, etc."
     echo ""
 }
 

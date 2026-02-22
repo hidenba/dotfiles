@@ -38,6 +38,7 @@ Arch Linux (Niri/Wayland) 環境の設定ファイル管理リポジトリ。
 ├── systemd-user/       # ユーザーサービス
 ├── scripts/            # ~/.local/bin/ カスタムスクリプト
 ├── etc/                # /etc/ システム設定 (Stow対象外)
+├── wallpaper/          # 壁紙 (デスクトップ、ロック画面、ログイン画面)
 ├── packages/           # pacman/AUR パッケージリスト
 └── install.sh          # 環境構築スクリプト
 ```
@@ -170,6 +171,18 @@ pamu2fcfg -n >> ~/.config/Yubico/u2f_keys
 - `~/.config/Yubico/u2f_keys` はデバイス固有の公開鍵情報を含むため **Gitに含めない** (`.gitignore`済み)
 - LUKS の FIDO2 credential もデバイス固有 — 新PCでは `systemd-cryptenroll` で再登録が必要
 - すべての認証ポイントでパスワードフォールバックを維持し、YubiKey紛失時のロックアウトを防止
+
+## 壁紙
+
+`wallpaper/` ディレクトリに壁紙画像を格納。install.sh が自動配置する。
+
+| ファイル | 配置先 | 用途 |
+|---------|--------|------|
+| `wallpaper.png` | `~/Pictures/wallpaper/` | デスクトップ背景 (swaybg) |
+| `lock_bg.png` | `~/Pictures/wallpaper/` | swaylock ロック画面 |
+| `lock_bg.png` | `/usr/share/backgrounds/` | greetd ログイン画面 (greeterユーザー用) |
+
+壁紙を変更する場合は `wallpaper/` 内のファイルを差し替えてコミットする。
 
 ## その他の注意事項
 
