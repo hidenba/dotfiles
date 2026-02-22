@@ -1,0 +1,72 @@
+#!/bin/bash
+set -euo pipefail
+
+DOTFILES_DIR="$HOME/.dotfiles"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+info()  { echo -e "${BLUE}[INFO]${NC} $*"; }
+ok()    { echo -e "${GREEN}[OK]${NC} $*"; }
+error() { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
+
+usage() {
+    cat <<'EOF'
+Usage: dotfiles-append <package-name> <path>...
+
+Add files to an existing stow package and restow.
+
+Examples:
+  dotfiles-append waybar ~/.config/waybar/new-module.json
+  dotfiles-append scripts ~/.local/bin/new-script.sh
+EOF
+    exit 1
+}
+
+[ $# -lt 2 ] && usage
+
+pkg="$1"
+shift
+paths=("$@")
+
+pkg_dir="$DOTFILES_DIR/$pkg"
+
+if [ ! -d "$pkg_dir" ]; then
+    error "Stow package '$pkg' does not exist. Use 'dotfiles-add' to create it."
+fi
+
+for src in "${paths[@]}"; do
+    src="${src/#\~/$HOME}"
+    if [ ! -e "$src" ]; then
+        error "Path not found: $src"
+    fi
+    case "$src" in
+        "$HOME"/*) ;;
+        *) error "Path must be under \$HOME: $src" ;;
+    esac
+done
+
+# Unstow first to avoid conflicts
+cd "$DOTFILES_DIR"
+stow --delete --target="$HOME" "$pkg" 2>/dev/null || true
+
+for src in "${paths[@]}"; do
+    src="${src/#\~/$HOME}"
+    rel="${src#$HOME/}"
+    dst="$pkg_dir/$rel"
+
+    mkdir -p "$(dirname "$dst")"
+    info "Moving: ~/$rel → ~/.dotfiles/$pkg/$rel"
+    mv "$src" "$dst"
+done
+
+# Restow
+stow --restow --target="$HOME" "$pkg"
+git -C "$DOTFILES_DIR" add "$pkg/"
+
+ok "Files added to '$pkg' and restowed"
+echo ""
+echo "Staged in git. To commit:"
+echo "  cd ~/.dotfiles && git commit -m 'Update $pkg config'"

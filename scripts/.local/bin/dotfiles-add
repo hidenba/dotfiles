@@ -1,0 +1,91 @@
+#!/bin/bash
+set -euo pipefail
+
+DOTFILES_DIR="$HOME/.dotfiles"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+info()  { echo -e "${BLUE}[INFO]${NC} $*"; }
+ok()    { echo -e "${GREEN}[OK]${NC} $*"; }
+error() { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
+
+usage() {
+    cat <<'EOF'
+Usage: dotfiles-add <package-name> <path>...
+
+Move config files/directories into a stow package and deploy symlinks.
+
+Examples:
+  dotfiles-add hyprland ~/.config/hyprland
+  dotfiles-add starship ~/.config/starship.toml
+  dotfiles-add tmux ~/.tmux.conf
+  dotfiles-add newapp ~/.config/newapp ~/.local/share/newapp/config
+
+What it does:
+  1. Creates ~/.dotfiles/<package-name>/ with the correct directory structure
+  2. Moves the original files/directories into the stow package
+  3. Runs stow to create symlinks back to the original locations
+  4. Stages the new files in git
+EOF
+    exit 1
+}
+
+[ $# -lt 2 ] && usage
+
+pkg="$1"
+shift
+paths=("$@")
+
+pkg_dir="$DOTFILES_DIR/$pkg"
+
+if [ -d "$pkg_dir" ]; then
+    error "Stow package '$pkg' already exists at $pkg_dir"
+fi
+
+# Validate all paths exist before doing anything
+for src in "${paths[@]}"; do
+    src="${src/#\~/$HOME}"
+    if [ ! -e "$src" ]; then
+        error "Path not found: $src"
+    fi
+    # Must be under $HOME
+    case "$src" in
+        "$HOME"/*) ;;
+        *) error "Path must be under \$HOME: $src" ;;
+    esac
+done
+
+# Move files into stow structure
+for src in "${paths[@]}"; do
+    src="${src/#\~/$HOME}"
+    rel="${src#$HOME/}"       # e.g. .config/hyprland or .tmux.conf
+    dst="$pkg_dir/$rel"
+
+    mkdir -p "$(dirname "$dst")"
+
+    info "Moving: ~/$rel → ~/.dotfiles/$pkg/$rel"
+    mv "$src" "$dst"
+done
+
+# Deploy symlinks
+info "Running stow..."
+cd "$DOTFILES_DIR"
+stow --target="$HOME" "$pkg"
+
+# Stage in git
+git -C "$DOTFILES_DIR" add "$pkg/"
+
+ok "Package '$pkg' created and stowed"
+echo ""
+echo "Symlinks:"
+for src in "${paths[@]}"; do
+    src="${src/#\~/$HOME}"
+    ls -la "$src" 2>/dev/null || true
+done
+echo ""
+echo "Staged in git. To commit:"
+echo "  cd ~/.dotfiles && git commit -m 'Add $pkg config'"
