@@ -1,0 +1,16 @@
+output "DP-2" {
+    off
+}
+output "DP-3" {
+    off
+}
+
+window-rule {
+    default-column-width { proportion 1.0; }
+}
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+spawn-sh-at-startup "regreet --style /etc/greetd/regreet.css; niri msg action quit --skip-confirmation"

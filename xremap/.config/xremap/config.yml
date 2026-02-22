@@ -1,0 +1,20 @@
+modmap:
+  - name: CapsLock to Ctrl
+    remap:
+      CapsLock: Ctrl_L
+
+keymap:
+  - name: Emacs keybindings
+    application:
+      not:
+        - Alacritty
+    remap:
+      C-f: right
+      C-b: left
+      C-n: down
+      C-p: up
+      C-a: home
+      C-e: end
+      C-d: delete
+      C-h: backspace
+      C-g: esc

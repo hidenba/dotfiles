@@ -1,0 +1,11 @@
+[Unit]
+Description=OBS Meet Bridge - auto-toggle virtual camera
+After=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/hidenba/.local/bin/obs-meet-bridge.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

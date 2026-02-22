@@ -1,0 +1,9 @@
+# Greeter sway config
+output * bg /usr/share/backgrounds/lock_bg.png fill
+
+# Disable all outputs except center
+output DP-1 enable
+output DP-2 disable
+output DP-3 disable
+
+exec "regreet; swaymsg exit"

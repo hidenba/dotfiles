@@ -1,0 +1,15 @@
+1password
+1password-cli
+claude-code
+elephant-bin
+elephant-nirisessions-bin
+google-chrome
+notion-app-electron
+obs-backgroundremoval
+paru
+paru-debug
+slack-desktop
+uhubctl
+upscayl-bin
+visual-studio-code-bin
+xremap-niri-bin

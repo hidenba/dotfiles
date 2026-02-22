@@ -1,0 +1,62 @@
+* {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+window {
+    background-color: transparent;
+}
+
+entry {
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #c0caf5;
+    border: 1px solid #505050;
+    border-radius: 6px;
+    padding: 6px 10px;
+    min-height: 30px;
+}
+
+button, button.destructive-action, button.suggested-action {
+    background-color: rgba(0, 0, 0, 0.5);
+    background-image: none;
+    color: #c0caf5;
+    border: 1px solid #505050;
+    border-radius: 6px;
+    padding: 4px 12px;
+}
+
+button:hover, button.destructive-action:hover, button.suggested-action:hover {
+    background-color: rgba(65, 72, 104, 0.5);
+    background-image: none;
+}
+
+button:active, button:checked {
+    background-color: rgba(40, 40, 60, 0.7);
+    background-image: none;
+}
+
+combobox, dropdown {
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #c0caf5;
+    border: 1px solid #505050;
+    border-radius: 6px;
+}
+
+combobox button, dropdown button {
+    background-color: rgba(0, 0, 0, 0.5);
+    background-image: none;
+    color: #c0caf5;
+    border: 1px solid #505050;
+}
+
+label {
+    color: #c0caf5;
+}
+
+headerbar {
+    background-color: transparent;
+    background-image: none;
+    border: none;
+    box-shadow: none;
+}

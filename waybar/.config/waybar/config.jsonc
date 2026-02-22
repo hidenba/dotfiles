@@ -1,0 +1,169 @@
+{
+    "height": 30,
+    "spacing": 4,
+    "modules-left": [
+        "niri/workspaces"
+    ],
+    "modules-center": [],
+    "modules-right": [
+        "idle_inhibitor",
+        "pulseaudio",
+        "network",
+        "group/cpu",
+        "group/gpu",
+        "custom/weather",
+        "clock",
+        "custom/keylight",
+        "custom/service",
+        "tray",
+        "custom/power"
+    ],
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "",
+            "deactivated": ""
+        }
+    },
+    "tray": {
+        "spacing": 10
+    },
+    "clock": {
+        "format": "{:%Y-%m-%d %H:%M}",
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
+    },
+    "cpu": {
+        "format": "{usage}% ",
+        "tooltip": false
+    },
+    "memory": {
+        "format": "{}% "
+    },
+    "temperature": {
+        "critical-threshold": 80,
+        "format": "{temperatureC}°C {icon}",
+        "format-icons": [
+            "",
+            "",
+            ""
+        ],
+        "hwmon-path": "/sys/class/hwmon/hwmon2/temp1_input"
+    },
+    "network": {
+        "format-wifi": "{essid} ({signalStrength}%) ",
+        "format-ethernet": "{ipaddr}/{cidr} ",
+        "tooltip-format": "{ifname} via {gwaddr} ",
+        "format-linked": "{ifname} (No IP) ",
+        "format-disconnected": "Disconnected ⚠",
+        "format-alt": "{ifname}: {ipaddr}/{cidr}"
+    },
+    "pulseaudio": {
+        "format": "{volume}% {icon}   {format_source}",
+        "format-bluetooth": "{volume}% {icon}   {format_source}",
+        "format-bluetooth-muted": " {icon}   {format_source}",
+        "format-muted": " {format_source}",
+        "format-source": "{volume}% ",
+        "format-source-muted": "",
+        "format-icons": {
+            "headphone": "",
+            "hands-free": "",
+            "headset": "",
+            "phone": "",
+            "portable": "",
+            "car": "",
+            "default": [
+                "",
+                "",
+                ""
+            ]
+        },
+        "on-click": "pavucontrol"
+    },
+    "custom/power": {
+        "format": "⏻ ",
+        "tooltip": false,
+        "menu": "on-click",
+        "menu-file": "$HOME/.config/waybar/power_menu.xml",
+        "menu-actions": {
+            "shutdown": "shutdown",
+            "reboot": "reboot",
+            "suspend": "systemctl suspend",
+            "hibernate": "systemctl hibernate"
+        }
+    },
+    "niri/workspaces": {
+        "format": "{icon}",
+        "format-icons": {
+            "default": ""
+        }
+    },
+    "custom/weather": {
+        "format": "{}",
+        "tooltip": true,
+        "interval": 1800,
+        "exec": "curl -s 'wttr.in/Nakano,Tokyo?format=%c+%t'",
+        "on-click": "xdg-open https://weather.yahoo.co.jp/weather/jp/13/4410/13114.html"
+    },
+    "custom/gpu-usage": {
+        "format": "{} ",
+        "interval": 5,
+        "exec": "nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits | awk '{printf \"%d%%\", $1}'"
+    },
+    "custom/gpu-temp": {
+        "format": "{} ",
+        "interval": 5,
+        "exec": "nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits | awk '{printf \"%d°C\", $1}'"
+    },
+    "custom/gpu-vram": {
+        "format": "{} ",
+        "return-type": "json",
+        "interval": 5,
+        "exec": "nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader,nounits | awk -F', ' '{pct=int($1/$2*100); printf \"{\\\"text\\\": \\\"%d%%\\\", \\\"tooltip\\\": \\\"VRAM: %d/%d MiB\\\"}\", pct, $1, $2}'"
+    },
+    "group/cpu": {
+        "orientation": "horizontal",
+        "modules": [
+            "custom/cpu-label",
+            "cpu",
+            "memory",
+            "temperature"
+        ]
+    },
+    "group/gpu": {
+        "orientation": "horizontal",
+        "modules": [
+            "custom/gpu-label",
+            "custom/gpu-usage",
+            "custom/gpu-vram",
+            "custom/gpu-temp"
+        ]
+    },
+    "custom/cpu-label": {
+        "format": "CPU",
+        "interval": "once"
+    },
+    "custom/gpu-label": {
+        "format": "GPU",
+        "interval": "once"
+    },
+    "custom/service": {
+        "format": " ",
+        "on-click": "echo",
+        "tooltip": false,
+        "menu": "on-click",
+        "menu-file": "$HOME/.config/waybar/service_menu.xml",
+        "menu-actions": {
+            "audio": "systemctl --user restart pipewire pipewire-pulse wireplumber && sleep 3 && pactl set-default-source rnnoise_source",
+            "network": "sudo systemctl restart systemd-networkd systemd-resolved"
+        }
+    },
+    "custom/keylight": {
+        "format": " {}",
+        "return-type": "json",
+        "interval": 5,
+        "exec": "$HOME/.local/bin/keylight.sh status",
+        "on-click": "python3 /home/hidenba/.local/bin/keylight-control.py",
+        "on-scroll-up": "$HOME/.local/bin/keylight.sh brightness-up",
+        "on-scroll-down": "$HOME/.local/bin/keylight.sh brightness-down"
+    }
+}

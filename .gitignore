@@ -1,0 +1,24 @@
+# Security - never commit credentials
+**/u2f_keys
+**/*.key
+**/*.pem
+**/.env
+
+# OBS runtime state
+obs/.config/obs-studio/basic/
+obs/.config/obs-studio/logs/
+obs/.config/obs-studio/plugin_config/
+obs/.config/obs-studio/crashes/
+obs/.config/obs-studio/profiler_data/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Fcitx5 cached data
+fcitx5/.config/fcitx5/conf/cached_layouts
+
+# Editor backups
+*~
+*.swp
+*.swo
