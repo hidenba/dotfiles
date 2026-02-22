@@ -412,9 +412,66 @@ sudo grub-mkconfig -o /boot/grub/grub.cfg
 snapper list                              # スナップショット一覧
 snapper status <pre_num>..<post_num>      # pre/post 間の変更ファイル一覧
 snapper diff <pre_num>..<post_num> <file> # 特定ファイルの差分
-snapper undochange <pre_num>..<post_num>  # 変更をロールバック
-snapper rollback <num>                    # スナップショットにロールバック (要再起動)
+snapper undochange <pre_num>..<post_num>  # 変更をロールバック (部分的)
 ```
+
+### ロールバック手順
+
+Arch では `snapper rollback` は使えない。ルートサブボリューム `@` を手動で差し替える必要がある。
+
+#### A. システムが起動できる場合 — 部分ロールバック
+
+pacman 操作を取り消すだけなら `undochange` で十分:
+
+```bash
+# 例: snap-pac の pre=206, post=207 の間の変更を巻き戻す
+sudo snapper undochange 206..207
+```
+
+#### B. システムが起動できない場合 — フルロールバック
+
+##### 方法1: grub-btrfs でスナップショットから起動して復旧
+
+1. GRUB メニューで「Arch Linux snapshots」を選択
+2. 戻したいスナップショットを選んで起動 (read-only で起動する)
+3. 起動できたら、以下で `@` を差し替え:
+
+```bash
+# Btrfs トップレベル (subvolid=5) をマウント
+sudo mount -o subvolid=5 /dev/mapper/vg-root /mnt
+
+# 壊れた @ を退避
+sudo mv /mnt/@ /mnt/@_broken
+
+# スナップショットから新しい @ を read-write で作成
+# <num> は戻したいスナップショット番号
+sudo btrfs subvolume snapshot /mnt/@snapshots/<num>/snapshot /mnt/@
+
+# 退避した @_broken は確認後に削除
+# sudo btrfs subvolume delete /mnt/@_broken
+
+sudo umount /mnt
+sudo reboot
+```
+
+##### 方法2: ライブUSBから復旧
+
+1. ライブUSBで起動
+2. LUKS + LVM を開く:
+
+```bash
+cryptsetup open /dev/nvme0n1p2 cryptlvm
+# Btrfs トップレベルをマウント
+mount -o subvolid=5 /dev/mapper/vg-root /mnt
+```
+
+3. 以降は方法1のステップ3と同じ (`mv @`, `btrfs subvolume snapshot`)
+
+#### 注意事項
+
+- `@home`, `@var_log` は `@` とは別サブボリュームなので、ルートのロールバックの影響を受けない
+- `@snapshots` も独立しているので、ロールバック後もスナップショット一覧は維持される
+- fstab と GRUB で `subvol=/@` を明示指定しているため、default subvolume の設定に依存しない
 
 ## その他の注意事項
 
