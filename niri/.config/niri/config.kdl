@@ -294,7 +294,7 @@ spawn-at-startup "alacritty"
 spawn-at-startup "google-chrome-stable"
 spawn-sh-at-startup "google-chrome-stable --profile-directory=Default --app-id=fmgjjmmmlfnkbppncabfkddbjimcfncm"
 spawn-sh-at-startup "google-chrome-stable --profile-directory=Default --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep"
-spawn-at-startup "obs" "--minimize-to-tray" "--disable-missing-files-check" "--disable-shutdown-check"
+// OBS is managed by systemd user service (obs.service)
 spawn-sh-at-startup "swayidle -w timeout 300 'swaylock -f' timeout 600 'systemctl suspend'"
 // Stack Gmail and Calendar vertically after launch
 spawn-sh-at-startup "/home/hidenba/.local/bin/session-layout.sh"
