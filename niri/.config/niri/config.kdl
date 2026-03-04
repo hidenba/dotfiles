@@ -79,21 +79,21 @@ input {
 output "DP-3" {
     mode "3840x2160"
     scale 1.0
-    position x=0 y=0
+    position x=0 y=2160
 }
 
 // Center: LG ULTRAFINE 31.5" (DP-1)
 output "DP-1" {
     mode "3840x2160@143.999"
     scale 1.0
-    position x=3840 y=0
+    position x=3840 y=2160
 }
 
-// Right: LG HDR 4K 27" (DP-2)
+// Top: LG HDR 4K 27" (DP-2)
 output "DP-2" {
     mode "3840x2160"
     scale 1.0
-    position x=7680 y=0
+    position x=3840 y=0
 }
 
 // Settings that influence how windows are positioned and sized.
