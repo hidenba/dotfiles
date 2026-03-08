@@ -10,8 +10,56 @@ import sys
 import signal
 import subprocess
 
-KEYLIGHT_URL = "http://192.168.1.4:9123/elgato/lights"
+CACHE_FILE = "/tmp/keylight-ip"
+DEFAULT_IP = "192.168.1.4"
+PORT = 9123
 CLOSEFILE = "/tmp/keylight-control.closed"
+
+def resolve_ip():
+    """Try cached IP, then default IP, then mDNS discovery."""
+    # Try cached IP
+    if os.path.exists(CACHE_FILE):
+        try:
+            cached_ip = open(CACHE_FILE).read().strip()
+            if cached_ip:
+                url = f"http://{cached_ip}:{PORT}/elgato/lights"
+                urllib.request.urlopen(url, timeout=1)
+                return cached_ip
+        except:
+            pass
+
+    # Try default IP
+    try:
+        url = f"http://{DEFAULT_IP}:{PORT}/elgato/lights"
+        urllib.request.urlopen(url, timeout=1)
+        with open(CACHE_FILE, 'w') as f:
+            f.write(DEFAULT_IP)
+        return DEFAULT_IP
+    except:
+        pass
+
+    # Discover via mDNS
+    try:
+        result = subprocess.run(
+            ["avahi-browse", "-t", "-r", "-p", "_elg._tcp"],
+            capture_output=True, text=True, timeout=5
+        )
+        for line in result.stdout.splitlines():
+            if line.startswith("=") and "IPv4" in line:
+                ip = line.split(";")[7]
+                with open(CACHE_FILE, 'w') as f:
+                    f.write(ip)
+                return ip
+    except:
+        pass
+
+    return None
+
+def get_keylight_url():
+    ip = resolve_ip()
+    if ip:
+        return f"http://{ip}:{PORT}/elgato/lights"
+    return None
 
 def check_toggle():
     import time
@@ -55,7 +103,10 @@ def cleanup(*args):
 
 def get_state():
     try:
-        with urllib.request.urlopen(KEYLIGHT_URL, timeout=2) as r:
+        url = get_keylight_url()
+        if not url:
+            return None
+        with urllib.request.urlopen(url, timeout=2) as r:
             data = json.loads(r.read())
             return data['lights'][0]
     except:
@@ -63,8 +114,11 @@ def get_state():
 
 def set_state(**kwargs):
     try:
+        url = get_keylight_url()
+        if not url:
+            return
         payload = json.dumps({"numberOfLights": 1, "lights": [kwargs]}).encode()
-        req = urllib.request.Request(KEYLIGHT_URL, data=payload, method='PUT',
+        req = urllib.request.Request(url, data=payload, method='PUT',
                                      headers={'Content-Type': 'application/json'})
         urllib.request.urlopen(req, timeout=2)
     except:

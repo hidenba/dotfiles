@@ -1,8 +1,48 @@
 #!/bin/bash
-KEYLIGHT="http://192.168.1.4:9123/elgato/lights"
+CACHE_FILE="/tmp/keylight-ip"
+DEFAULT_IP="192.168.1.4"
+PORT=9123
+
+resolve_ip() {
+    # Try cached IP first
+    if [ -f "$CACHE_FILE" ]; then
+        local cached_ip
+        cached_ip=$(cat "$CACHE_FILE")
+        if curl -s --max-time 1 "http://${cached_ip}:${PORT}/elgato/lights" >/dev/null 2>&1; then
+            echo "$cached_ip"
+            return
+        fi
+    fi
+
+    # Try default IP
+    if curl -s --max-time 1 "http://${DEFAULT_IP}:${PORT}/elgato/lights" >/dev/null 2>&1; then
+        echo "$DEFAULT_IP" > "$CACHE_FILE"
+        echo "$DEFAULT_IP"
+        return
+    fi
+
+    # Discover via mDNS
+    local discovered
+    discovered=$(avahi-browse -t -r -p _elg._tcp 2>/dev/null | awk -F';' '/^=.*IPv4/ {print $8; exit}')
+    if [ -n "$discovered" ]; then
+        echo "$discovered" > "$CACHE_FILE"
+        echo "$discovered"
+        return
+    fi
+
+    return 1
+}
+
+get_url() {
+    local ip
+    ip=$(resolve_ip) || return 1
+    echo "http://${ip}:${PORT}/elgato/lights"
+}
 
 get_state() {
-    curl -s "$KEYLIGHT" 2>/dev/null
+    local url
+    url=$(get_url) || return 1
+    curl -s "$url" 2>/dev/null
 }
 
 case "$1" in
@@ -14,7 +54,8 @@ case "$1" in
         else
             new_on=1
         fi
-        curl -s -X PUT "$KEYLIGHT" -H "Content-Type: application/json" \
+        url=$(get_url) || exit 1
+        curl -s -X PUT "$url" -H "Content-Type: application/json" \
             -d "{\"numberOfLights\":1,\"lights\":[{\"on\":$new_on}]}" > /dev/null
         ;;
     brightness-up)
@@ -22,7 +63,8 @@ case "$1" in
         br=$(echo "$state" | python3 -c "import json,sys; print(json.load(sys.stdin)['lights'][0]['brightness'])")
         new_br=$((br + 10))
         [ "$new_br" -gt 100 ] && new_br=100
-        curl -s -X PUT "$KEYLIGHT" -H "Content-Type: application/json" \
+        url=$(get_url) || exit 1
+        curl -s -X PUT "$url" -H "Content-Type: application/json" \
             -d "{\"numberOfLights\":1,\"lights\":[{\"brightness\":$new_br}]}" > /dev/null
         ;;
     brightness-down)
@@ -30,7 +72,8 @@ case "$1" in
         br=$(echo "$state" | python3 -c "import json,sys; print(json.load(sys.stdin)['lights'][0]['brightness'])")
         new_br=$((br - 10))
         [ "$new_br" -lt 3 ] && new_br=3
-        curl -s -X PUT "$KEYLIGHT" -H "Content-Type: application/json" \
+        url=$(get_url) || exit 1
+        curl -s -X PUT "$url" -H "Content-Type: application/json" \
             -d "{\"numberOfLights\":1,\"lights\":[{\"brightness\":$new_br}]}" > /dev/null
         ;;
     status)

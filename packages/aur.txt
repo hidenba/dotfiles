@@ -7,6 +7,7 @@ google-chrome
 notion-app-electron
 obs-backgroundremoval
 paru
+paru-debug
 slack-desktop
 uhubctl
 upscayl-bin
