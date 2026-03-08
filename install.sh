@@ -131,6 +131,8 @@ phase_system() {
         "pam.d/polkit-1"
         "systemd/network/20-wired.network"
         "systemd/system/niri-resume-fix.service"
+        "udev/rules.d/99-network-tuning.rules"
+        "sysctl.d/99-network-tuning.conf"
     )
 
     # Files with hardware-specific UUIDs - show diff but don't auto-copy

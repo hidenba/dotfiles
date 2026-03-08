@@ -1,0 +1,1 @@
+ACTION=="add", SUBSYSTEM=="net", KERNEL=="enp5s0", RUN+="/usr/bin/ethtool -K $name lro on", RUN+="/usr/bin/ethtool -G $name rx 8184"
