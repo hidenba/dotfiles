@@ -133,6 +133,15 @@ phase_system() {
         "systemd/system/niri-resume-fix.service"
         "udev/rules.d/99-network-tuning.rules"
         "sysctl.d/99-network-tuning.conf"
+        "systemd/system/systemd-networkd-wait-online.service.d/override.conf"
+        "pacman.d/hooks/nvidia.hook"
+        "modules-load.d/v4l2loopback.conf"
+    )
+
+    # System-wide configs - show diff but don't auto-copy (may need manual merge)
+    local system_configs=(
+        "pacman.conf"
+        "locale.gen"
     )
 
     # Files with hardware-specific UUIDs - show diff but don't auto-copy
@@ -141,7 +150,7 @@ phase_system() {
         "default/grub"
     )
 
-    for f in "${files[@]}"; do
+    for f in "${files[@]}" "${system_configs[@]}"; do
         local src="$etc_dir/$f"
         local dst="/etc/$f"
         if [ ! -f "$src" ]; then
