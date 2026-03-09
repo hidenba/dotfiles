@@ -4,7 +4,7 @@ GRUB_DEFAULT=0
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Arch"
 GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"
-GRUB_CMDLINE_LINUX="rd.luks.name=bf879543-575d-4aa3-87fe-6b9f86fe4c59=cryptlvm rd.luks.options=bf879543-575d-4aa3-87fe-6b9f86fe4c59=fido2-device=auto root=/dev/vg/root rootflags=subvol=@ nvidia_drm.modeset=1"
+GRUB_CMDLINE_LINUX="rd.luks.name=a55359d1-ae39-412b-92c4-24c68d6a2416=cryptlvm rd.luks.options=a55359d1-ae39-412b-92c4-24c68d6a2416=fido2-device=auto root=/dev/vg/root rootflags=subvol=@ nvidia_drm.modeset=1"
 
 # Preload both GPT and MBR modules so that they are not missed
 GRUB_PRELOAD_MODULES="part_gpt part_msdos"

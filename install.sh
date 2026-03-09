@@ -2,7 +2,7 @@
 set -euo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
-STOW_PACKAGES=(shell alacritty niri waybar pipewire obs mako fuzzel swaylock xremap fcitx5 wayland-flags git systemd-user scripts wallpaper)
+STOW_PACKAGES=(shell alacritty niri waybar pipewire obs mako fuzzel swaylock xremap fcitx5 wayland-flags git systemd-user scripts wallpaper gtk)
 
 # Colors
 RED='\033[0;31m'
