@@ -1,4 +1,4 @@
-# Keyball44: reset on enumeration to fix bad state at boot/resume
-# deauthorize → reauthorize forces USB HID re-initialization (equivalent to soft replug)
+# Keyball44: reset on enumeration to fix bad state at boot/resume.
+# Script uses a flag file to prevent recursive triggering from the reset itself.
 ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="5957", ATTR{idProduct}=="0400", \
-    RUN+="/bin/sh -c 'sleep 0.5 && echo 0 > /sys%p/authorized && sleep 0.3 && echo 1 > /sys%p/authorized'"
+    RUN+="/etc/udev/scripts/keyball44-reset.sh $env{DEVPATH}"
