@@ -275,7 +275,10 @@ spawn-at-startup "xwayland-satellite"
 environment {
     DISPLAY ":0"
     LANGUAGE "ja"
+    GTK_THEME "Adwaita:dark"
 }
+
+spawn-sh-at-startup "gsettings set org.gnome.desktop.interface color-scheme prefer-dark"
 
 // This line starts waybar, a commonly used bar for Wayland compositors.
 spawn-at-startup "waybar"

@@ -59,7 +59,6 @@ python-pillow
 python-websockets
 snap-pac
 snapper
-steam
 stow
 sudo
 sway

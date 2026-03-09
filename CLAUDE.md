@@ -25,6 +25,7 @@ GNU Stowによるdotfiles管理リポジトリ。Arch Linux + Niri (Wayland) 環
 | `swaylock/` | `~/.config/swaylock/` | ロック画面設定 |
 | `xremap/` | `~/.config/xremap/` | Emacsキーバインド + CapsLock→Ctrl |
 | `fcitx5/` | `~/.config/fcitx5/` | 日本語入力(Mozc)設定 |
+| `gtk/` | `~/.config/gtk-3.0/`, `~/.config/gtk-4.0/` | GTKダークモード設定 (Adwaita:dark) |
 | `wayland-flags/` | `~/.config/` | Chrome/Electron/Slack/Notion Waylandフラグ |
 | `git/` | `~/.config/git/` | global ignore |
 | `systemd-user/` | `~/.config/systemd/user/` | obs-meet-bridge.service |
