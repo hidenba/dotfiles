@@ -92,8 +92,8 @@ output "DP-4" {
 // Top: LG HDR 4K 27" (DP-5)
 output "DP-5" {
     mode "3840x2160"
-    scale 1.0
-    position x=3840 y=0
+    scale 1.5
+    position x=3840 y=720
 }
 
 // Settings that influence how windows are positioned and sized.
