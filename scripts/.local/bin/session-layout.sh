@@ -25,19 +25,16 @@ if ws: print(ws[0]['id'])
 move_to_workspace() {
     local wid="$1"
     local ws="$2"
-    if [ -n "$wid" ]; then
-        niri msg action move-window-to-workspace --window-id "$wid" --focus false "$ws"
-        sleep 0.2
-    fi
+    [ -n "$wid" ] || return
+    niri msg action move-window-to-workspace --window-id "$wid" --focus false "$ws"
+    sleep 0.2
 }
 
-focus_and_set_width() {
+focus() {
     local wid="$1"
-    local width="$2"
+    [ -n "$wid" ] || return
     niri msg action focus-window --id "$wid"
-    sleep 0.1
-    niri msg action set-column-width "$width"
-    sleep 0.1
+    sleep 0.2
 }
 
 # Wait for all apps to launch
@@ -51,10 +48,9 @@ x_id=$(wait_for_app "chrome-lodlkdfmihgonocnmddehnfgiljnadcf-Default")
 
 sleep 0.5
 
-# Move to workspaces
+# Move all windows to their workspaces
 move_to_workspace "$chrome_id" "WS1"
 move_to_workspace "$alacritty_id" "WS2"
-# WS3: move in desired column order (left to right)
 move_to_workspace "$gmail_id" "WS3"
 move_to_workspace "$calendar_id" "WS3"
 move_to_workspace "$slack_id" "WS3"
@@ -63,30 +59,70 @@ move_to_workspace "$x_id" "WS3"
 
 sleep 0.5
 
-# === WS3: stack Calendar into Gmail's column ===
-# After moving, order is: gmail(col1) | calendar(col2) | slack(col3) | tokimeki(col4) | x(col5)
-# Focus calendar → consume-or-expel-window-left brings gmail into this column (gmail goes below)
-# Then move gmail up so it's on top
-if [ -n "$calendar_id" ] && [ -n "$gmail_id" ]; then
-    niri msg action focus-window --id "$calendar_id"
-    sleep 0.2
-    niri msg action consume-or-expel-window-left
-    sleep 0.2
-    niri msg action focus-window --id "$gmail_id"
-    sleep 0.2
-    niri msg action move-window-up
-    sleep 0.2
-fi
+# === WS3: build column order explicitly ===
+# Target: [gmail+calendar] | slack | tokimeki | x
+#
+# Strategy: position from right to left, then merge gmail+calendar.
+# After all moves to WS3, columns are in unknown order.
+# We anchor gmail at col1 and x at last, then place the rest.
 
-# === Set column widths explicitly ===
-# WS3 columns (monitor: DP-5, 3840px wide)
-[ -n "$gmail_id" ]    && focus_and_set_width "$gmail_id" "50%"
-[ -n "$slack_id" ]    && focus_and_set_width "$slack_id" "33%"
-[ -n "$tokimeki_id" ] && focus_and_set_width "$tokimeki_id" "23%"
-[ -n "$x_id" ]        && focus_and_set_width "$x_id" "23%"
+niri msg action focus-workspace "WS3"
+sleep 0.3
 
-# WS1: Chrome full width
-[ -n "$chrome_id" ] && focus_and_set_width "$chrome_id" "100%"
+# Step 1: gmail → col1
+focus "$gmail_id"
+niri msg action move-column-to-first
+sleep 0.2
+
+# Step 2: x → last
+focus "$x_id"
+niri msg action move-column-to-last
+sleep 0.2
+
+# Step 3: tokimeki → second to last (move to last, then left once)
+focus "$tokimeki_id"
+niri msg action move-column-to-last
+sleep 0.2
+niri msg action move-column-left
+sleep 0.2
+
+# Step 4: slack → third from right (move to last, then left twice)
+focus "$slack_id"
+niri msg action move-column-to-last
+sleep 0.2
+niri msg action move-column-left
+sleep 0.2
+niri msg action move-column-left
+sleep 0.2
+
+# Now order: [gmail] | [calendar] | [slack] | [tokimeki] | [x]
+
+# Step 5: calendar → col2 (right of gmail)
+focus "$calendar_id"
+niri msg action move-column-to-first
+sleep 0.2
+niri msg action move-column-right
+sleep 0.2
+
+# Now order: [gmail] | [calendar] | [slack] | [tokimeki] | [x]
+
+# Step 6: merge - focus gmail and consume calendar from the right
+# gmail is alone at col1, calendar is alone at col2
+# consume-or-expel-window-right: grabs calendar into gmail's column below gmail ✓
+focus "$gmail_id"
+niri msg action consume-or-expel-window-right
+sleep 0.3
+
+# Final order: [gmail(top)+calendar(bottom)] | [slack] | [tokimeki] | [x]
+
+# === Set column widths ===
+[ -n "$gmail_id" ]    && { focus "$gmail_id";    niri msg action set-column-width "50%"; sleep 0.1; }
+[ -n "$slack_id" ]    && { focus "$slack_id";    niri msg action set-column-width "33%"; sleep 0.1; }
+[ -n "$tokimeki_id" ] && { focus "$tokimeki_id"; niri msg action set-column-width "23%"; sleep 0.1; }
+[ -n "$x_id" ]        && { focus "$x_id";        niri msg action set-column-width "23%"; sleep 0.1; }
+
+# === WS1: Chrome full width ===
+[ -n "$chrome_id" ] && { focus "$chrome_id"; niri msg action set-column-width "100%"; sleep 0.1; }
 
 # Return focus to WS2 (Alacritty)
 niri msg action focus-workspace "WS2"
