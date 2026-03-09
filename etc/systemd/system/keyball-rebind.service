@@ -1,0 +1,11 @@
+[Unit]
+Description=Rebind Keyball44 USB device at boot
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 3
+ExecStart=/etc/systemd/system-sleep/keyball-rebind post
+
+[Install]
+WantedBy=multi-user.target

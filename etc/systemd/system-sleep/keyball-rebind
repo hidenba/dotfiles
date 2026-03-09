@@ -1,0 +1,21 @@
+#!/bin/bash
+# Rebind Keyball44 USB device after suspend/hibernate resume.
+# The keyboard sometimes fails to re-enumerate without a manual replug.
+
+case "$1" in
+    post)
+        # Find the USB bus path for Keyball44 (vendor 5957, product 0400)
+        for dev in /sys/bus/usb/devices/*/; do
+            vendor=$(cat "$dev/idVendor" 2>/dev/null)
+            product=$(cat "$dev/idProduct" 2>/dev/null)
+            if [ "$vendor" = "5957" ] && [ "$product" = "0400" ]; then
+                buspath=$(basename "$dev")
+                echo -n "$buspath" > /sys/bus/usb/drivers/usb/unbind
+                sleep 0.5
+                echo -n "$buspath" > /sys/bus/usb/drivers/usb/bind
+                logger "keyball-rebind: rebound $buspath"
+                break
+            fi
+        done
+        ;;
+esac

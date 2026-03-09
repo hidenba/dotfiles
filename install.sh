@@ -131,6 +131,8 @@ phase_system() {
         "pam.d/polkit-1"
         "systemd/network/20-wired.network"
         "systemd/system/niri-resume-fix.service"
+        "systemd/system/keyball-rebind.service"
+        "systemd/system-sleep/keyball-rebind"
         "udev/rules.d/99-network-tuning.rules"
         "sysctl.d/99-network-tuning.conf"
         "systemd/system/systemd-networkd-wait-online.service.d/override.conf"
@@ -211,6 +213,7 @@ phase_services() {
         "systemd-networkd.service"
         "systemd-resolved.service"
         "niri-resume-fix.service"
+        "keyball-rebind.service"
     )
 
     local user_services=(
