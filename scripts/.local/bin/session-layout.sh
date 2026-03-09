@@ -1,8 +1,8 @@
 #!/bin/bash
-# Arrange windows after startup:
-# - WS1: X → Bluesky → Slack (left to right, 1/3 width each)
-# - WS2: Alacritty
-# - WS3: Chrome | Gmail(top) + Calendar(bottom)
+# Arrange windows at startup:
+# - WS1 (DP-6, left):         Chrome (full width)
+# - WS2 (DP-4, center):       Alacritty
+# - WS3 (DP-5, above center): Gmail(top)+Calendar(bottom) | Slack | TOKIMEKI | X
 
 wait_for_app() {
     local app_id="$1"
@@ -31,64 +31,62 @@ move_to_workspace() {
     fi
 }
 
-# Wait for all apps
-x_id=$(wait_for_app "chrome-lodlkdfmihgonocnmddehnfgiljnadcf-Default")
-bluesky_id=$(wait_for_app "chrome-bfhhgkbefeegpcomnekbgheelhdokijo-Default")
-slack_id=$(wait_for_app "Slack")
+focus_and_set_width() {
+    local wid="$1"
+    local width="$2"
+    niri msg action focus-window --id "$wid"
+    sleep 0.1
+    niri msg action set-column-width "$width"
+    sleep 0.1
+}
+
+# Wait for all apps to launch
 chrome_id=$(wait_for_app "google-chrome")
+alacritty_id=$(wait_for_app "Alacritty")
 gmail_id=$(wait_for_app "chrome-fmgjjmmmlfnkbppncabfkddbjimcfncm-Default")
 calendar_id=$(wait_for_app "chrome-kjbdgfilnfhdoflbpgamdcdgpehopbep-Default")
-alacritty_id=$(wait_for_app "Alacritty")
-
-sleep 1
-
-# Move windows to their workspaces
-move_to_workspace "$x_id" "WS1"
-move_to_workspace "$bluesky_id" "WS1"
-move_to_workspace "$slack_id" "WS1"
-move_to_workspace "$alacritty_id" "WS2"
-move_to_workspace "$chrome_id" "WS3"
-move_to_workspace "$gmail_id" "WS3"
-move_to_workspace "$calendar_id" "WS3"
+slack_id=$(wait_for_app "Slack")
+tokimeki_id=$(wait_for_app "chrome-oabljfpldnlibhnolagcomejpdljdgda-Default")
+x_id=$(wait_for_app "chrome-lodlkdfmihgonocnmddehnfgiljnadcf-Default")
 
 sleep 0.5
 
-# === WS1: X → Bluesky → Slack ===
-if [ -n "$x_id" ] && [ -n "$bluesky_id" ] && [ -n "$slack_id" ]; then
-    niri msg action focus-window --id "$x_id"
-    sleep 0.2
-    niri msg action move-column-to-first
-    sleep 0.2
-    niri msg action focus-window --id "$slack_id"
-    sleep 0.2
-    niri msg action move-column-to-last
-    sleep 0.2
-fi
+# Move to workspaces
+move_to_workspace "$chrome_id" "WS1"
+move_to_workspace "$alacritty_id" "WS2"
+# WS3: move in desired column order (left to right)
+move_to_workspace "$gmail_id" "WS3"
+move_to_workspace "$calendar_id" "WS3"
+move_to_workspace "$slack_id" "WS3"
+move_to_workspace "$tokimeki_id" "WS3"
+move_to_workspace "$x_id" "WS3"
 
-# === WS3: Chrome(left) | Gmail(top) + Calendar(bottom) ===
-if [ -n "$chrome_id" ] && [ -n "$gmail_id" ] && [ -n "$calendar_id" ]; then
-    # Chrome to the leftmost
-    niri msg action focus-window --id "$chrome_id"
-    sleep 0.2
-    niri msg action move-column-to-first
-    sleep 0.2
-    # Gmail next to Chrome
-    niri msg action focus-window --id "$gmail_id"
-    sleep 0.2
-    niri msg action move-column-to-first
-    sleep 0.1
-    niri msg action move-column-right
-    sleep 0.2
-    # Calendar to the right end
+sleep 0.5
+
+# === WS3: stack Calendar into Gmail's column ===
+# After moving, order is: gmail(col1) | calendar(col2) | slack(col3) | tokimeki(col4) | x(col5)
+# Focus calendar → consume-or-expel-window-left brings gmail into this column (gmail goes below)
+# Then move gmail up so it's on top
+if [ -n "$calendar_id" ] && [ -n "$gmail_id" ]; then
     niri msg action focus-window --id "$calendar_id"
     sleep 0.2
-    niri msg action move-column-to-last
-    sleep 0.2
-    # Consume Gmail into Calendar's column (Gmail is left of Calendar)
     niri msg action consume-or-expel-window-left
     sleep 0.2
-    # Move Gmail up so it's on top
     niri msg action focus-window --id "$gmail_id"
     sleep 0.2
     niri msg action move-window-up
+    sleep 0.2
 fi
+
+# === Set column widths explicitly ===
+# WS3 columns (monitor: DP-5, 3840px wide)
+[ -n "$gmail_id" ]    && focus_and_set_width "$gmail_id" "50%"
+[ -n "$slack_id" ]    && focus_and_set_width "$slack_id" "33%"
+[ -n "$tokimeki_id" ] && focus_and_set_width "$tokimeki_id" "23%"
+[ -n "$x_id" ]        && focus_and_set_width "$x_id" "23%"
+
+# WS1: Chrome full width
+[ -n "$chrome_id" ] && focus_and_set_width "$chrome_id" "100%"
+
+# Return focus to WS2 (Alacritty)
+niri msg action focus-workspace "WS2"

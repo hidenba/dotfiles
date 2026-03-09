@@ -75,22 +75,22 @@ input {
 // The built-in laptop monitor is usually called "eDP-1".
 // Find more information on the wiki:
 // https://yalter.github.io/niri/Configuration:-Outputs
-// Left: LG HDR 4K 31.5" (DP-3)
-output "DP-3" {
+// Left: LG HDR 4K 31.5" (DP-6)
+output "DP-6" {
     mode "3840x2160"
     scale 1.0
     position x=0 y=2160
 }
 
-// Center: LG ULTRAFINE 31.5" (DP-1)
-output "DP-1" {
+// Center: LG ULTRAFINE 31.5" (DP-4)
+output "DP-4" {
     mode "3840x2160@143.999"
     scale 1.0
     position x=3840 y=2160
 }
 
-// Top: LG HDR 4K 27" (DP-2)
-output "DP-2" {
+// Top: LG HDR 4K 27" (DP-5)
+output "DP-5" {
     mode "3840x2160"
     scale 1.0
     position x=3840 y=0
@@ -258,13 +258,13 @@ layout {
 
 // Named workspaces bound to monitors
 workspace "WS1" {
-    open-on-output "DP-3"
+    open-on-output "DP-6"
 }
 workspace "WS2" {
-    open-on-output "DP-1"
+    open-on-output "DP-4"
 }
 workspace "WS3" {
-    open-on-output "DP-2"
+    open-on-output "DP-5"
 }
 
 // Emacs keybindings via xremap
@@ -284,19 +284,19 @@ spawn-at-startup "blueman-applet"
 spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
 spawn-at-startup "1password" "--silent"
 spawn-sh-at-startup "swaybg -i ~/Pictures/wallpaper/wallpaper.png -m fill"
-// WS1 apps (X → Bluesky → Slack)
-spawn-sh-at-startup "google-chrome-stable --profile-directory=Default --app-id=lodlkdfmihgonocnmddehnfgiljnadcf"
-spawn-sh-at-startup "google-chrome-stable --profile-directory=Default --app-id=bfhhgkbefeegpcomnekbgheelhdokijo"
-spawn-at-startup "slack"
-// WS2 apps
-spawn-at-startup "alacritty"
-// WS3 apps
+// WS1: Chrome (main browser)
 spawn-at-startup "google-chrome-stable"
+// WS2: Terminal
+spawn-at-startup "alacritty"
+// WS3: Gmail | Calendar | Slack | TOKIMEKI | X
 spawn-sh-at-startup "google-chrome-stable --profile-directory=Default --app-id=fmgjjmmmlfnkbppncabfkddbjimcfncm"
 spawn-sh-at-startup "google-chrome-stable --profile-directory=Default --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep"
+spawn-at-startup "slack"
+spawn-sh-at-startup "google-chrome-stable --profile-directory=Default --app-id=oabljfpldnlibhnolagcomejpdljdgda"
+spawn-sh-at-startup "google-chrome-stable --profile-directory=Default --app-id=lodlkdfmihgonocnmddehnfgiljnadcf"
 // OBS is managed by systemd user service (obs.service)
 spawn-sh-at-startup "swayidle -w timeout 300 'swaylock -f' timeout 600 'systemctl suspend'"
-// Stack Gmail and Calendar vertically after launch
+// Arrange windows to their workspaces and columns
 spawn-sh-at-startup "/home/hidenba/.local/bin/session-layout.sh"
 
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
@@ -339,18 +339,33 @@ animations {
 
 // Window rules (no workspace assignment - apps open on focused workspace)
 // Startup layout is handled by session-layout.sh
-// WS1: X, Bluesky, Slack
+// WS1: Chrome (full width)
 window-rule {
-    match app-id=r#"^chrome-lodlkdfmihgonocnmddehnfgiljnadcf-Default$"#
-    default-column-width { proportion 0.33333; }
+    match app-id="google-chrome"
+    default-column-width { proportion 1.0; }
+}
+// WS3: Gmail + Calendar (50% width, stacked vertically)
+window-rule {
+    match app-id=r#"^chrome-fmgjjmmmlfnkbppncabfkddbjimcfncm-Default$"#
+    default-column-width { proportion 0.5; }
 }
 window-rule {
-    match app-id=r#"^chrome-bfhhgkbefeegpcomnekbgheelhdokijo-Default$"#
-    default-column-width { proportion 0.33333; }
+    match app-id=r#"^chrome-kjbdgfilnfhdoflbpgamdcdgpehopbep-Default$"#
+    default-column-width { proportion 0.5; }
 }
+// WS3: Slack (33% width)
 window-rule {
     match app-id="Slack"
     default-column-width { proportion 0.33333; }
+}
+// WS3: TOKIMEKI, X (23% width)
+window-rule {
+    match app-id=r#"^chrome-oabljfpldnlibhnolagcomejpdljdgda-Default$"#
+    default-column-width { proportion 0.23333; }
+}
+window-rule {
+    match app-id=r#"^chrome-lodlkdfmihgonocnmddehnfgiljnadcf-Default$"#
+    default-column-width { proportion 0.23333; }
 }
 // WS2: Alacritty
 window-rule {
