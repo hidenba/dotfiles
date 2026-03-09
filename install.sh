@@ -52,21 +52,21 @@ phase_packages() {
     fi
 
     # Import GPG keys required by AUR packages
-    local gpg_keys=(
-        "3FEF9748469ADBE15DA7CA80AC2D62742012EA22"  # 1Password code signing
-    )
-    for key in "${gpg_keys[@]}"; do
-        if ! gpg --list-keys "$key" &>/dev/null; then
-            info "Importing GPG key: $key"
-            gpg --recv-keys "$key"
-            ok "Imported: $key"
-        fi
-    done
+    # 1Password: import from official URL (gpg --recv-keys is unreliable)
+    local op_key_id="3FEF9748469ADBE15DA7CA80AC2D62742012EA22"
+    if ! gpg --list-keys "$op_key_id" &>/dev/null; then
+        info "Importing 1Password GPG key..."
+        curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --import
+        ok "Imported 1Password GPG key"
+    fi
 
     # Install AUR packages
+    # xargs instead of stdin to avoid paru's interactive selection menu
+    # --skipreview skips PKGBUILD diff review
     if [ -f "$DOTFILES_DIR/packages/aur.txt" ]; then
         info "Installing AUR packages..."
-        paru -S --needed --noconfirm - < "$DOTFILES_DIR/packages/aur.txt"
+        grep -v '^#\|^$' "$DOTFILES_DIR/packages/aur.txt" | \
+            xargs paru -S --needed --noconfirm --skipreview
         ok "AUR packages installed"
     fi
 }
@@ -163,10 +163,8 @@ phase_system() {
         else
             info "Diff for $dst:"
             diff --color=auto "$src" "$dst" 2>/dev/null || true
-            if confirm "Copy $f to /etc/?"; then
-                sudo cp "$src" "$dst"
-                ok "Copied: $dst"
-            fi
+            sudo cp "$src" "$dst"
+            ok "Copied: $dst"
         fi
     done
 
