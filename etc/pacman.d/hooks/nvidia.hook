@@ -1,7 +1,7 @@
 [Trigger]
 Operation=Install
 Operation=Upgrade
-Operarion=Remove
+Operation=Remove
 Type=Package
 Target=nvidia
 Target=Linux

@@ -18,6 +18,11 @@ __pycache__/
 # Fcitx5 cached data
 fcitx5/.config/fcitx5/conf/cached_layouts
 
+# Runtime data / state (not portable)
+scripts/.local/share/
+scripts/.local/state/
+systemd-user/.config/systemd/user/default.target.wants/
+
 # Editor backups
 *~
 *.swp

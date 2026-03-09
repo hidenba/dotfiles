@@ -10,7 +10,7 @@ Arch Linux (Niri/Wayland) 環境の設定ファイル管理リポジトリ。
 |------|-----|
 | OS | Arch Linux |
 | WM | Niri (Wayland scrollable tiling) |
-| モニター | LG 4K x3 (144Hz center + 60Hz left/right) |
+| モニター | LG 4K x3 (DP-4 center 144Hz, DP-5 above center, DP-6 left) |
 | GPU | NVIDIA (proprietary) |
 | Shell | zsh |
 | Terminal | Alacritty |

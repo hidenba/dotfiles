@@ -55,7 +55,7 @@ pacman -Qm  | awk '{print $1}' > packages/aur.txt
 - **Host**: tromania
 - **OS**: Arch Linux (systemd-boot → GRUB, LUKS + LVM + Btrfs)
 - **WM**: Niri (Wayland scrollable tiling)
-- **Monitors**: 3x LG 4K (DP-1 center 144Hz, DP-2 right, DP-3 left)
+- **Monitors**: 3x LG 4K (DP-4 center 144Hz, DP-5 above center, DP-6 left)
 - **GPU**: NVIDIA (nvidia-drm, proprietary driver)
 - **Shell**: zsh
 - **Terminal**: Alacritty
