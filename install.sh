@@ -257,6 +257,10 @@ phase_postinstall() {
         ok "GRUB config regenerated"
     fi
 
+    # Add user to required groups
+    sudo usermod -aG input,docker "$USER"
+    ok "Added $USER to input, docker groups (re-login required)"
+
     echo ""
     warn "=== Manual steps remaining ==="
     echo "  1. Register YubiKey for PAM:  pamu2fcfg > ~/.config/Yubico/u2f_keys"
