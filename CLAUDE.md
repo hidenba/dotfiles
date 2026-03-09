@@ -44,6 +44,11 @@ pacman -Qen | awk '{print $1}' > packages/pacman.txt
 pacman -Qm  | awk '{print $1}' > packages/aur.txt
 ```
 
+## Instructions for Claude
+
+- 作業前に必ず `README.md` を全文読み、手順・設計意図を完全に把握してから着手すること
+- 手順が複数ステップにまたがる場合（例: YubiKey設定はLUKS FIDO2登録とPAM U2F登録の両方）、すべてのステップを確認してから「完了」と判断すること
+
 ## Conventions
 
 - 新しいアプリの設定を追加するときは、Stowパッケージとしてディレクトリを作る（例: `newapp/.config/newapp/config`）
