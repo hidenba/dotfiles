@@ -132,6 +132,7 @@ phase_system() {
         "systemd/network/20-wired.network"
         "systemd/system/niri-resume-fix.service"
         "udev/rules.d/99-network-tuning.rules"
+        "udev/rules.d/70-uinput.rules"
         "sysctl.d/99-network-tuning.conf"
         "systemd/system/systemd-networkd-wait-online.service.d/override.conf"
         "pacman.d/hooks/nvidia.hook"
