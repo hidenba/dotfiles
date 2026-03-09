@@ -46,6 +46,7 @@ noto-fonts-emoji
 nvidia-open-dkms
 nvidia-utils
 obs-studio
+openssh
 os-prober
 otf-font-awesome
 pam-u2f
