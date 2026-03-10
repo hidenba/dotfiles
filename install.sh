@@ -145,6 +145,7 @@ phase_system() {
         "systemd/system/systemd-networkd-wait-online.service.d/override.conf"
         "pacman.d/hooks/nvidia.hook"
         "modules-load.d/v4l2loopback.conf"
+        "modules-load.d/uinput.conf"
         "paru.conf"
     )
 
