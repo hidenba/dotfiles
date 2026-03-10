@@ -1,6 +1,5 @@
 #!/bin/bash
 CACHE_FILE="/tmp/keylight-ip"
-DEFAULT_IP="192.168.1.4"
 PORT=9123
 
 resolve_ip() {
@@ -14,20 +13,42 @@ resolve_ip() {
         fi
     fi
 
-    # Try default IP
-    if curl -s --max-time 1 "http://${DEFAULT_IP}:${PORT}/elgato/lights" >/dev/null 2>&1; then
-        echo "$DEFAULT_IP" > "$CACHE_FILE"
-        echo "$DEFAULT_IP"
-        return
+    # Discover via mDNS (activate avahi-daemon if not running)
+    if ! systemctl is-active --quiet avahi-daemon 2>/dev/null; then
+        systemctl start avahi-daemon 2>/dev/null
+        sleep 1
     fi
-
-    # Discover via mDNS
     local discovered
     discovered=$(avahi-browse -t -r -p _elg._tcp 2>/dev/null | awk -F';' '/^=.*IPv4/ {print $8; exit}')
     if [ -n "$discovered" ]; then
         echo "$discovered" > "$CACHE_FILE"
         echo "$discovered"
         return
+    fi
+
+    # Subnet scan fallback (parallel)
+    local subnet base_ip scan_result
+    subnet=$(ip route | awk '/scope link/ && /192\.168/ {print $1}' | head -1)
+    if [ -n "$subnet" ]; then
+        base_ip=$(echo "$subnet" | sed 's/\.[0-9]*\/[0-9]*//')
+        scan_result=$(mktemp)
+        for i in $(seq 1 254); do
+            (
+                if curl -s --max-time 0.5 "http://${base_ip}.${i}:${PORT}/elgato/lights" 2>/dev/null | grep -q "lights"; then
+                    echo "${base_ip}.${i}" > "$scan_result"
+                fi
+            ) &
+        done
+        wait
+        if [ -s "$scan_result" ]; then
+            local found
+            found=$(cat "$scan_result")
+            rm -f "$scan_result"
+            echo "$found" > "$CACHE_FILE"
+            echo "$found"
+            return
+        fi
+        rm -f "$scan_result"
     fi
 
     return 1

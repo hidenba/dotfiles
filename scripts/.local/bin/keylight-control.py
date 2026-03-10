@@ -11,12 +11,11 @@ import signal
 import subprocess
 
 CACHE_FILE = "/tmp/keylight-ip"
-DEFAULT_IP = "192.168.1.4"
 PORT = 9123
 CLOSEFILE = "/tmp/keylight-control.closed"
 
 def resolve_ip():
-    """Try cached IP, then default IP, then mDNS discovery."""
+    """Try cached IP, then mDNS discovery, then subnet scan."""
     # Try cached IP
     if os.path.exists(CACHE_FILE):
         try:
@@ -28,17 +27,17 @@ def resolve_ip():
         except:
             pass
 
-    # Try default IP
+    # Ensure avahi-daemon is running, then discover via mDNS
     try:
-        url = f"http://{DEFAULT_IP}:{PORT}/elgato/lights"
-        urllib.request.urlopen(url, timeout=1)
-        with open(CACHE_FILE, 'w') as f:
-            f.write(DEFAULT_IP)
-        return DEFAULT_IP
-    except:
-        pass
-
-    # Discover via mDNS
+        subprocess.run(["systemctl", "is-active", "--quiet", "avahi-daemon"],
+                       check=True, timeout=2)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        try:
+            subprocess.run(["systemctl", "start", "avahi-daemon"], timeout=5)
+            import time
+            time.sleep(1)
+        except:
+            pass
     try:
         result = subprocess.run(
             ["avahi-browse", "-t", "-r", "-p", "_elg._tcp"],
@@ -50,6 +49,39 @@ def resolve_ip():
                 with open(CACHE_FILE, 'w') as f:
                     f.write(ip)
                 return ip
+    except:
+        pass
+
+    # Subnet scan fallback
+    import ipaddress
+    import concurrent.futures
+    try:
+        route = subprocess.run(["ip", "route"], capture_output=True, text=True, timeout=2)
+        subnet = None
+        for line in route.stdout.splitlines():
+            if "scope link" in line and "192.168" in line:
+                subnet = line.split()[0]
+                break
+        if subnet:
+            network = ipaddress.ip_network(subnet, strict=False)
+            def check_host(ip):
+                try:
+                    url = f"http://{ip}:{PORT}/elgato/lights"
+                    with urllib.request.urlopen(url, timeout=0.5) as r:
+                        if b"lights" in r.read():
+                            return str(ip)
+                except:
+                    pass
+                return None
+            with concurrent.futures.ThreadPoolExecutor(max_workers=64) as executor:
+                futures = {executor.submit(check_host, ip): ip for ip in network.hosts()}
+                for future in concurrent.futures.as_completed(futures):
+                    result = future.result()
+                    if result:
+                        with open(CACHE_FILE, 'w') as f:
+                            f.write(result)
+                        executor.shutdown(wait=False, cancel_futures=True)
+                        return result
     except:
         pass
 
