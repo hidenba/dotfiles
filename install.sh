@@ -137,6 +137,7 @@ phase_system() {
         "systemd/system/systemd-networkd-wait-online.service.d/override.conf"
         "pacman.d/hooks/nvidia.hook"
         "modules-load.d/v4l2loopback.conf"
+        "paru.conf"
     )
 
     # System-wide configs - show diff but don't auto-copy (may need manual merge)
