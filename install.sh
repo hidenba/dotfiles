@@ -33,6 +33,14 @@ phase_packages() {
         return 1
     fi
 
+    # Apply pacman.conf first (enables multilib required for steam, etc.)
+    if ! diff -q "$DOTFILES_DIR/etc/pacman.conf" /etc/pacman.conf &>/dev/null; then
+        info "Copying pacman.conf (enables multilib)..."
+        sudo cp "$DOTFILES_DIR/etc/pacman.conf" /etc/pacman.conf
+        sudo pacman -Sy
+        ok "pacman.conf applied and database synced"
+    fi
+
     # Install official packages
     if [ -f "$DOTFILES_DIR/packages/pacman.txt" ]; then
         info "Installing official packages..."
@@ -169,6 +177,15 @@ phase_system() {
             ok "Copied: $dst"
         fi
     done
+
+    # resolv.conf: link to systemd-resolved stub so CEF-based apps (Steam, etc.) can resolve DNS
+    if [ ! -L /etc/resolv.conf ] || [ "$(readlink /etc/resolv.conf)" != "/run/systemd/resolve/stub-resolv.conf" ]; then
+        info "Linking /etc/resolv.conf to systemd-resolved stub..."
+        sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+        ok "Linked: /etc/resolv.conf -> /run/systemd/resolve/stub-resolv.conf"
+    else
+        ok "Already correct: /etc/resolv.conf"
+    fi
 
     # Wallpaper for greetd (greeter user can't access ~/Pictures)
     local lock_bg="$HOME/Pictures/wallpaper/lock_bg.png"
