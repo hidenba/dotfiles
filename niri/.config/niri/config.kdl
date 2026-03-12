@@ -342,11 +342,6 @@ animations {
 
 // Window rules (no workspace assignment - apps open on focused workspace)
 // Startup layout is handled by session-layout.sh
-// WS1: Chrome (full width)
-window-rule {
-    match app-id="google-chrome"
-    default-column-width { proportion 1.0; }
-}
 // WS3: Gmail + Calendar (50% width, stacked vertically)
 window-rule {
     match app-id=r#"^chrome-fmgjjmmmlfnkbppncabfkddbjimcfncm-Default$"#
