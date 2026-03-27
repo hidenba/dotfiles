@@ -67,12 +67,15 @@ swaybg
 swayidle
 swaylock
 thunar
+thunar-archive-plugin
 thunderbird
 ttf-firacode-nerd
+unrar
 uv
 v4l2loopback-dkms
 vim
 waybar
+xarchiver
 xorg-xlsclients
 xorg-xwayland
 xwayland-satellite
