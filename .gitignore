@@ -23,6 +23,9 @@ scripts/.local/share/
 scripts/.local/state/
 systemd-user/.config/systemd/user/default.target.wants/
 
+# Screenshots
+wallpaper/Pictures/Screenshots/
+
 # Editor backups
 *~
 *.swp
