@@ -292,11 +292,12 @@ spawn-at-startup "google-chrome-stable"
 // WS2: Terminal
 spawn-at-startup "alacritty"
 // WS3: Gmail | Calendar | Slack | TOKIMEKI | X
-spawn-sh-at-startup "google-chrome-stable --profile-directory=Default --app-id=fmgjjmmmlfnkbppncabfkddbjimcfncm"
-spawn-sh-at-startup "google-chrome-stable --profile-directory=Default --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep"
+// sleep 5s to let main Chrome establish its singleton before app instances start
+spawn-sh-at-startup "sleep 5 && google-chrome-stable --profile-directory=Default --app-id=fmgjjmmmlfnkbppncabfkddbjimcfncm"
+spawn-sh-at-startup "sleep 5 && google-chrome-stable --profile-directory=Default --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep"
 spawn-at-startup "slack"
-spawn-sh-at-startup "google-chrome-stable --profile-directory=Default --app-id=oabljfpldnlibhnolagcomejpdljdgda"
-spawn-sh-at-startup "google-chrome-stable --profile-directory=Default --app-id=lodlkdfmihgonocnmddehnfgiljnadcf"
+spawn-sh-at-startup "sleep 5 && google-chrome-stable --profile-directory=Default --app-id=oabljfpldnlibhnolagcomejpdljdgda"
+spawn-sh-at-startup "sleep 5 && google-chrome-stable --profile-directory=Default --app-id=lodlkdfmihgonocnmddehnfgiljnadcf"
 // OBS is managed by systemd user service (obs.service)
 spawn-sh-at-startup "swayidle -w timeout 300 'swaylock -f' timeout 600 'systemctl suspend'"
 // Arrange windows to their workspaces and columns
