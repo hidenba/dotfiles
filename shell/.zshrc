@@ -60,9 +60,10 @@ alias -g L='| less'
 alias -g T='| tail'
 
 alias gd='dirs -v; echo -n "select number: "; read newdir; cd -"$newdir"'
-alias emacs='emacs -nw'
-
-export EDITOR=='emacs'
+if (( $+commands[emacs] )); then
+  alias emacs='emacs -nw'
+  export EDITOR='emacs'
+fi
 
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.rbenv/shims:$PATH"
