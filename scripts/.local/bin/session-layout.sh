@@ -6,12 +6,13 @@
 
 wait_for_app() {
     local app_id="$1"
+    local index="${2:-0}"
     for i in $(seq 1 60); do
         local wid
         wid=$(niri msg -j windows | python3 -c "
 import json,sys
 ws=[w for w in json.load(sys.stdin) if w['app_id']=='$app_id']
-if ws: print(ws[0]['id'])
+if len(ws) > $index: print(ws[$index]['id'])
 " 2>/dev/null)
         if [ -n "$wid" ]; then
             echo "$wid"
@@ -38,10 +39,12 @@ focus() {
 }
 
 # Wait for all apps to launch
-chrome_id=$(wait_for_app "google-chrome")
+chrome_id=$(wait_for_app "google-chrome" 0)
+chrome_default_id=$(wait_for_app "google-chrome" 1)
 alacritty_id=$(wait_for_app "Alacritty")
-gmail_id=$(wait_for_app "chrome-fmgjjmmmlfnkbppncabfkddbjimcfncm-Default")
-calendar_id=$(wait_for_app "chrome-kjbdgfilnfhdoflbpgamdcdgpehopbep-Default")
+code_id=$(wait_for_app "code")
+gmail_id=$(wait_for_app "chrome-fmgjjmmmlfnkbppncabfkddbjimcfncm-Profile_1")
+calendar_id=$(wait_for_app "chrome-kjbdgfilnfhdoflbpgamdcdgpehopbep-Profile_1")
 slack_id=$(wait_for_app "Slack")
 tokimeki_id=$(wait_for_app "chrome-oabljfpldnlibhnolagcomejpdljdgda-Default")
 x_id=$(wait_for_app "chrome-lodlkdfmihgonocnmddehnfgiljnadcf-Default")
@@ -51,6 +54,8 @@ sleep 0.5
 # Move all windows to their workspaces
 move_to_workspace "$chrome_id" "WS1"
 move_to_workspace "$alacritty_id" "WS2"
+move_to_workspace "$code_id" "WS2"
+move_to_workspace "$chrome_default_id" "WS4"
 move_to_workspace "$gmail_id" "WS3"
 move_to_workspace "$calendar_id" "WS3"
 move_to_workspace "$slack_id" "WS3"
@@ -123,6 +128,9 @@ sleep 0.3
 
 # === WS1: Chrome full width ===
 [ -n "$chrome_id" ] && { focus "$chrome_id"; niri msg action set-column-width "100%"; sleep 0.1; }
+
+# === WS4: Default Chrome full width ===
+[ -n "$chrome_default_id" ] && { focus "$chrome_default_id"; niri msg action set-column-width "100%"; sleep 0.1; }
 
 # Return focus to WS2 (Alacritty)
 niri msg action focus-workspace "WS2"

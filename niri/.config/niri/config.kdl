@@ -263,6 +263,9 @@ workspace "WS1" {
 workspace "WS2" {
     open-on-output "DP-4"
 }
+workspace "WS4" {
+    open-on-output "DP-4"
+}
 workspace "WS3" {
     open-on-output "DP-5"
 }
@@ -288,13 +291,16 @@ spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
 spawn-at-startup "1password" "--silent"
 spawn-sh-at-startup "swaybg -i ~/Pictures/wallpaper/wallpaper.png -m fill"
 // WS1: Chrome (main browser)
-spawn-at-startup "google-chrome-stable"
-// WS2: Terminal
+spawn-sh-at-startup "google-chrome-stable --profile-directory='Profile 1'"
+// WS2: Terminal + VSCode
 spawn-at-startup "alacritty"
+spawn-at-startup "code"
+// WS4: Chrome (default profile)
+spawn-sh-at-startup "sleep 2 && google-chrome-stable --profile-directory=Default"
 // WS3: Gmail | Calendar | Slack | TOKIMEKI | X
 // sleep 5s to let main Chrome establish its singleton before app instances start
-spawn-sh-at-startup "sleep 5 && google-chrome-stable --profile-directory=Default --app-id=fmgjjmmmlfnkbppncabfkddbjimcfncm"
-spawn-sh-at-startup "sleep 5 && google-chrome-stable --profile-directory=Default --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep"
+spawn-sh-at-startup "sleep 5 && google-chrome-stable --profile-directory='Profile 1' --app-id=fmgjjmmmlfnkbppncabfkddbjimcfncm"
+spawn-sh-at-startup "sleep 5 && google-chrome-stable --profile-directory='Profile 1' --app-id=kjbdgfilnfhdoflbpgamdcdgpehopbep"
 spawn-at-startup "slack"
 spawn-sh-at-startup "sleep 5 && google-chrome-stable --profile-directory=Default --app-id=oabljfpldnlibhnolagcomejpdljdgda"
 spawn-sh-at-startup "sleep 5 && google-chrome-stable --profile-directory=Default --app-id=lodlkdfmihgonocnmddehnfgiljnadcf"
@@ -345,11 +351,11 @@ animations {
 // Startup layout is handled by session-layout.sh
 // WS3: Gmail + Calendar (50% width, stacked vertically)
 window-rule {
-    match app-id=r#"^chrome-fmgjjmmmlfnkbppncabfkddbjimcfncm-Default$"#
+    match app-id=r#"^chrome-fmgjjmmmlfnkbppncabfkddbjimcfncm-Profile_1$"#
     default-column-width { proportion 0.5; }
 }
 window-rule {
-    match app-id=r#"^chrome-kjbdgfilnfhdoflbpgamdcdgpehopbep-Default$"#
+    match app-id=r#"^chrome-kjbdgfilnfhdoflbpgamdcdgpehopbep-Profile_1$"#
     default-column-width { proportion 0.5; }
 }
 // WS3: Slack (33% width)
