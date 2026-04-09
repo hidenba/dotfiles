@@ -9,6 +9,7 @@
         "idle_inhibitor",
         "pulseaudio",
         "network",
+        "custom/tailscale",
         "group/cpu",
         "group/gpu",
         "custom/weather",
@@ -156,6 +157,12 @@
             "audio": "systemctl --user restart pipewire pipewire-pulse wireplumber && sleep 3 && pactl set-default-source rnnoise_source",
             "network": "sudo systemctl restart systemd-networkd systemd-resolved"
         }
+    },
+    "custom/tailscale": {
+        "return-type": "json",
+        "interval": 5,
+        "exec": "$HOME/.local/bin/tailscale-waybar",
+        "on-click": "tailscale status >/dev/null 2>&1 && tailscale down || tailscale up"
     },
     "custom/keylight": {
         "format": " {}",

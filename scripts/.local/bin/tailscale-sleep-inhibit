@@ -1,0 +1,15 @@
+#!/bin/bash
+# Inhibit suspend while Tailscale is connected
+
+while true; do
+    if tailscale status &>/dev/null; then
+        systemd-inhibit \
+            --what=sleep \
+            --who=tailscale-sleep-inhibit \
+            --why="Tailscale is connected" \
+            --mode=block \
+            sleep 60
+    else
+        sleep 10
+    fi
+done

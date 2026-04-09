@@ -239,6 +239,7 @@ phase_services() {
 
     local user_services=(
         "obs-meet-bridge.service"
+        "tailscale-sleep-inhibit.service"
     )
 
     for svc in "${system_services[@]}"; do

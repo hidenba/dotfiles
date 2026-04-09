@@ -1,0 +1,9 @@
+#!/bin/bash
+# Waybar custom module for Tailscale status
+
+if tailscale status &>/dev/null; then
+    ip=$(tailscale ip -4 2>/dev/null)
+    printf '{"text": "󰖂 %s", "tooltip": "Tailscale: %s | Click to disconnect", "class": "connected"}\n' "$ip" "$ip"
+else
+    printf '{"text": "󰖂 off", "tooltip": "Tailscale: disconnected | Click to connect", "class": "disconnected"}\n'
+fi
