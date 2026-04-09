@@ -142,6 +142,7 @@ phase_system() {
         "systemd/system/greetd.service.d/nvidia-drm-wait.conf"
         "udev/rules.d/99-network-tuning.rules"
         "udev/rules.d/70-uinput.rules"
+        "udev/rules.d/50-usb-hub-no-autosuspend.rules"
         "sysctl.d/99-network-tuning.conf"
         "systemd/system/systemd-networkd-wait-online.service.d/override.conf"
         "pacman.d/hooks/nvidia.hook"
@@ -231,6 +232,8 @@ phase_services() {
         "snapper-cleanup.timer"
         "systemd-networkd.service"
         "systemd-resolved.service"
+        "sshd.service"
+        "tailscaled.service"
         "niri-resume-fix.service"
     )
 

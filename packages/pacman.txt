@@ -66,6 +66,7 @@ sway
 swaybg
 swayidle
 swaylock
+tailscale
 thunar
 thunar-archive-plugin
 thunderbird
@@ -75,6 +76,7 @@ uv
 v4l2loopback-dkms
 vim
 waybar
+wayvnc
 xarchiver
 xorg-xlsclients
 xorg-xwayland
