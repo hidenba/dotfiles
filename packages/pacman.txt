@@ -1,5 +1,8 @@
+accountsservice
 alacritty
 alsa-utils
+amd-ucode
+aws-cli-v2
 base
 base-devel
 blueman
@@ -32,12 +35,14 @@ greetd-tuigreet
 grub
 grub-btrfs
 intel-ucode
+less
 libfido2
 linux
 linux-firmware
 linux-headers
 lvm2
 mako
+mpv
 niri
 noise-suppression-for-voice
 noto-fonts
@@ -78,6 +83,7 @@ vim
 waybar
 wayvnc
 xarchiver
+xdg-desktop-portal-gnome
 xorg-xlsclients
 xorg-xwayland
 xwayland-satellite
