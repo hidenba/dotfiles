@@ -2,5 +2,5 @@
 vt = 1
 
 [default_session]
-command = "niri --config /etc/greetd/niri-greeter.kdl"
+command = "dbus-run-session niri --config /etc/greetd/niri-greeter.kdl"
 user = "greeter"
