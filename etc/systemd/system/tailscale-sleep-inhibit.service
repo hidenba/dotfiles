@@ -1,0 +1,13 @@
+[Unit]
+Description=Inhibit suspend while Tailscale is connected
+After=tailscaled.service
+
+[Service]
+Type=simple
+User=hidenba
+ExecStart=/home/hidenba/.local/bin/tailscale-sleep-inhibit
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

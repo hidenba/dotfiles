@@ -1,0 +1,15 @@
+#!/bin/bash
+# Hold sleep inhibitor while any SSH session is established
+
+while true; do
+    if ss -tn state established '( dport = :ssh or sport = :ssh )' | grep -q .; then
+        systemd-inhibit \
+            --what=sleep \
+            --who=ssh-sleep-inhibit \
+            --why="SSH session is active" \
+            --mode=block \
+            sleep 60
+    else
+        sleep 10
+    fi
+done

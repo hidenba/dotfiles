@@ -1,0 +1,12 @@
+[Unit]
+Description=Inhibit suspend while SSH sessions are active
+After=sshd.service network.target
+
+[Service]
+Type=simple
+ExecStart=/home/hidenba/.local/bin/ssh-sleep-inhibit
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
