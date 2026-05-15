@@ -1,0 +1,14 @@
+#!/bin/bash
+# Render a commit (or the current working diff) via delta. Used by tig F5
+# binding. tig emits the all-zero SHA when the cursor is on a virtual row like
+# "Unstaged changes" — fall back to `git diff` in that case.
+set -euo pipefail
+
+sha="${1:-}"
+zero="0000000000000000000000000000000000000000"
+
+if [ -z "$sha" ] || [ "$sha" = "$zero" ]; then
+    git diff --color=always
+else
+    git show --color=always "$sha"
+fi | delta --paging=always

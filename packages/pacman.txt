@@ -76,6 +76,7 @@ tailscale
 thunar
 thunar-archive-plugin
 thunderbird
+tig
 ttf-firacode-nerd
 unrar
 uv

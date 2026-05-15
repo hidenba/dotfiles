@@ -89,6 +89,30 @@ function peco-src () {
 zle -N peco-src
 bindkey '^]' peco-src
 
+# Pick a git worktree with peco and cd into it. Shows every entry, including
+# paths that only exist inside a devcontainer — picking one of those falls
+# through to a hint instead of trying to cd.
+function cdw () {
+  if ! git rev-parse --git-dir &>/dev/null; then
+    echo "cdw: not inside a git repository" >&2
+    return 1
+  fi
+  local line wt_dir
+  line=$(git worktree list | TERM=xterm peco --prompt 'worktree> ') || return
+  wt_dir=${line%% *}
+  [ -n "$wt_dir" ] || return
+  if [ ! -d "$wt_dir" ]; then
+    echo "cdw: $wt_dir does not exist on this host (likely a devcontainer path)." >&2
+    return 1
+  fi
+  cd "$wt_dir"
+}
+
+# cdw + launch tig.
+function tigw () {
+  cdw && tig "$@"
+}
+
 if [ $UID -eq 0 ];then
 # ルートユーザーの場合
 PROMPT="%F{red}%n:%f%F{green}%d%f [%m] %%

@@ -1,0 +1,33 @@
+# tig configuration
+# diff-highlight requires an external script whose path differs across distros
+# (Arch vs Debian-based devcontainers). Disable it and rely on the F5 keybind
+# below to pop diffs out into delta for richer rendering.
+set diff-highlight = false
+set vertical-split = horizontal
+set line-graphics = utf-8
+set tab-size = 4
+set ignore-case = smart-case
+set mouse = true
+set mouse-scroll = 3
+
+# Show more context around diff hunks
+set diff-options = -m --first-parent --stat -C -M --diff-algorithm=histogram
+
+# Main view: graph + author + date + subject
+set main-view = id date author commit-title:graph=yes,refs=yes
+
+# Key bindings
+bind main G move-last-line
+bind main g move-first-line
+bind diff G move-last-line
+bind diff g move-first-line
+bind generic <C-f> move-page-down
+bind generic <C-b> move-page-up
+
+# Pop the current commit out to a full delta view (side-by-side,
+# syntax-highlighted). Bound to F5 — unambiguous and free in tig's default
+# bindings. delta must be on PATH; install git-delta if missing.
+bind main    <F5> !tig-show-delta %(commit)
+bind diff    <F5> !tig-show-delta %(commit)
+bind refs    <F5> !tig-show-delta %(commit)
+bind stash   <F5> !tig-show-delta %(stash)
