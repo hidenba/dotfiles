@@ -13,3 +13,9 @@ action = "Copy"
 key = "V"
 mods = "Control"
 action = "Paste"
+
+# Ctrl+Shift+C を SIGINT (Ctrl+C は Copy に取られているので代替)
+[[keyboard.bindings]]
+key = "C"
+mods = "Control|Shift"
+chars = "\u0003"
