@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Stop and remove the devcontainer for a workspace. The official `devcontainer`
+# CLI has no `down` subcommand, so this fills the gap by locating containers via
+# the `devcontainer.local_folder` label that `devcontainer up` sets.
+#
+# Usage: devcontainer-down [WORKSPACE_DIR] [-v|--volumes]
+set -euo pipefail
+
+workspace=""
+remove_volumes=0
+for arg in "$@"; do
+    case "$arg" in
+        -v|--volumes) remove_volumes=1 ;;
+        -h|--help)
+            sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0
+            ;;
+        -*) echo "unknown flag: $arg" >&2; exit 2 ;;
+        *)  workspace=$arg ;;
+    esac
+done
+
+workspace=$(cd "${workspace:-$PWD}" && pwd)
+
+containers=$(docker ps -aq --filter "label=devcontainer.local_folder=$workspace")
+if [ -z "$containers" ]; then
+    echo "devcontainer-down: no container found for $workspace" >&2
+    exit 1
+fi
+
+compose_project=$(
+    docker inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' $containers 2>/dev/null \
+        | sort -u | grep -v '^<no value>$' | head -1 || true
+)
+
+if [ -n "$compose_project" ]; then
+    args=(compose -p "$compose_project" down)
+    [ "$remove_volumes" = "1" ] && args+=(--volumes)
+    echo "==> docker ${args[*]}"
+    docker "${args[@]}"
+else
+    echo "==> docker stop $containers"
+    docker stop $containers
+    if [ "$remove_volumes" = "1" ]; then
+        echo "==> docker rm -v $containers"
+        docker rm -v $containers
+    else
+        echo "==> docker rm $containers"
+        docker rm $containers
+    fi
+fi

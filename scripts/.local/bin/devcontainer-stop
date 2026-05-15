@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Stop (but do not remove) the devcontainer for a workspace. Preserves the
+# container so the next `devcontainer up` skips the build/create phase entirely.
+# Use `devcontainer-down` instead when you need a clean teardown.
+#
+# Usage: devcontainer-stop [WORKSPACE_DIR]
+set -euo pipefail
+
+workspace=""
+for arg in "$@"; do
+    case "$arg" in
+        -h|--help)
+            sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0
+            ;;
+        -*) echo "unknown flag: $arg" >&2; exit 2 ;;
+        *)  workspace=$arg ;;
+    esac
+done
+
+workspace=$(cd "${workspace:-$PWD}" && pwd)
+
+containers=$(docker ps -q --filter "label=devcontainer.local_folder=$workspace")
+if [ -z "$containers" ]; then
+    echo "devcontainer-stop: no running container found for $workspace" >&2
+    exit 1
+fi
+
+compose_project=$(
+    docker inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' $containers 2>/dev/null \
+        | sort -u | grep -v '^<no value>$' | head -1 || true
+)
+
+if [ -n "$compose_project" ]; then
+    echo "==> docker compose -p $compose_project stop"
+    docker compose -p "$compose_project" stop
+else
+    echo "==> docker stop $containers"
+    docker stop $containers
+fi
