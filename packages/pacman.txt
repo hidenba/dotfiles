@@ -28,6 +28,7 @@ fuzzel
 gamescope
 ghq
 git
+git-delta
 github-cli
 greetd
 greetd-regreet

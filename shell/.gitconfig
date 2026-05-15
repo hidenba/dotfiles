@@ -31,6 +31,19 @@
         precomposeunicode = true
         quotepath = off
 	editor = code --wait
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	line-numbers = true
+	side-by-side = true
+	syntax-theme = Monokai Extended
+	hyperlinks = true
+[merge]
+	conflictstyle = zdiff3
+[diff]
+	colorMoved = default
 [filter "media"]
 	clean = git-media-clean %f
 	smudge = git-media-smudge %f
