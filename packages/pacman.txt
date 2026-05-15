@@ -23,6 +23,7 @@ fcitx5-configtool
 fcitx5-gtk
 fcitx5-mozc
 fcitx5-qt
+fd
 firefox
 fuzzel
 gamescope
@@ -35,6 +36,7 @@ greetd-regreet
 greetd-tuigreet
 grub
 grub-btrfs
+imagemagick
 intel-ucode
 less
 libfido2
@@ -63,6 +65,7 @@ pipewire-pulse
 polkit-gnome
 python-pillow
 python-websockets
+ripgrep
 snap-pac
 snapper
 steam
@@ -89,5 +92,7 @@ xdg-desktop-portal-gnome
 xorg-xlsclients
 xorg-xwayland
 xwayland-satellite
+yazi
 yubikey-manager
+zoxide
 zsh

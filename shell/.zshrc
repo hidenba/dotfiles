@@ -89,6 +89,24 @@ function peco-src () {
 zle -N peco-src
 bindkey '^]' peco-src
 
+# zoxide: smart cd. `z <prefix>` jumps to a frecency-ranked match.
+# Also wires up the `__zoxide_z` query that yazi's `z` keybinding uses.
+if command -v zoxide &>/dev/null; then
+  eval "$(zoxide init zsh)"
+fi
+
+# yazi: wrapper that cd's to yazi's exit cwd, so quitting yazi leaves you in the
+# directory you navigated to. Recommended by upstream.
+function y() {
+  local tmp cwd
+  tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+  yazi "$@" --cwd-file="$tmp"
+  if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+    builtin cd -- "$cwd"
+  fi
+  rm -f -- "$tmp"
+}
+
 # Pick a git worktree with peco and cd into it. Shows every entry, including
 # paths that only exist inside a devcontainer — picking one of those falls
 # through to a hint instead of trying to cd.
