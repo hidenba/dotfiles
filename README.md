@@ -331,6 +331,51 @@ pamu2fcfg -n >> ~/.config/Yubico/u2f_keys
 - LUKS の FIDO2 credential もデバイス固有 — 新PCでは `systemd-cryptenroll` で再登録が必要
 - すべての認証ポイントでパスワードフォールバックを維持し、YubiKey紛失時のロックアウトを防止
 
+## 1Password (Secret Service / gnome-keyring)
+
+1Password の Authenticated Unlock を有効にしていても、Linuxでは `org.freedesktop.secrets` (Secret Service API) を提供するキーリングがないと **アカウントごとの2FAデバイストークンが永続化できない** ため、起動のたびに2FAプロンプトが出る。
+
+このリポジトリでは `gnome-keyring` を libsecret 経由の Secret Service プロバイダとして使う構成にしている。
+
+| 場所 | 役割 |
+|------|------|
+| `packages/pacman.txt` | `gnome-keyring` をインストール |
+| `niri/.config/niri/config.kdl` | `gnome-keyring-daemon --start --components=secrets` を session 開始時に起動 (SSH agentは1Passwordが提供するので `secrets` のみ) |
+| `etc/pam.d/greetd` | `pam_gnome_keyring.so` を `auth optional` / `session ... auto_start` / `password optional` で組み込み、ログインパスワードでキーリングを自動アンロック |
+
+### 新規PCでのセットアップ手順
+
+```bash
+# 1. install.sh Phase 1/3 で gnome-keyring と PAM 設定が入る
+./install.sh
+
+# 2. 再ログインすると niri startup で gnome-keyring-daemon が起動する
+#    YubiKeyタッチでログインしているため PAM は password を取れないが、
+#    初回の Secret API 呼び出し時に Default keyring がマスターパスワード無し
+#    (平文) で自動作成される。LUKS で全体暗号化されているため許容。
+
+# 3. 1Password を再起動して各アカウントにサインインし直す
+#    起動時のログに以下が出れば成功:
+#      "2FA authentication completed, 2FA token is now in system keyring"
+#    旧来の "Failed to save 2FA token / SystemKeyringError" は消える。
+
+# 4. 次回セッション以降、各アカウントの2FAプロンプトはスキップされ
+#    Authenticated Unlock のシステムパスワード入力のみで両アカウントが解錠される。
+```
+
+なお `~/.local/share/keyrings/Default_keyring.keyring` を後から暗号化したい場合は `seahorse` で "Login" を右クリック → "Change Password" でマスターパスワードを設定可能 (代わりにログインのたびに1回入力が必要になる)。
+
+### 確認方法
+
+```bash
+# Secret Service が動いていれば名前が表示される
+busctl --user list | grep -i secret
+
+# 1Password がキーリングを使えているかログで確認
+tail -f ~/.config/1Password/logs/1Password_rCURRENT.log | grep -iE "keyring|2FA"
+# "Failed to save an account's 2FA token" が出なければOK
+```
+
 ## 壁紙
 
 `wallpaper/` はStowパッケージとして `~/Pictures/wallpaper/` にシンボリックリンク展開される。

@@ -288,6 +288,9 @@ spawn-at-startup "waybar"
 spawn-at-startup "fcitx5" "-d"
 spawn-at-startup "blueman-applet"
 spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
+// Provide org.freedesktop.secrets so 1Password can cache 2FA device tokens.
+// Components limited to "secrets" — SSH agent is owned by 1Password itself.
+spawn-sh-at-startup "gnome-keyring-daemon --start --components=secrets"
 spawn-at-startup "1password" "--silent"
 spawn-sh-at-startup "swaybg -i ~/Pictures/wallpaper/wallpaper.png -m fill"
 // WS1: Chrome (main browser)
