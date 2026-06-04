@@ -293,13 +293,13 @@ spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
 spawn-sh-at-startup "gnome-keyring-daemon --start --components=secrets"
 spawn-at-startup "1password" "--silent"
 spawn-sh-at-startup "swaybg -i ~/Pictures/wallpaper/wallpaper.png -m fill"
-// WS1: Chrome (main browser)
+// WS1: Chrome (work profile). The personal profile is intentionally NOT
+// spawned here — session-layout.sh launches it after snapshotting every
+// "google-chrome" window that exists by then, so any session-restored work
+// windows can be reliably told apart from the personal one.
 spawn-sh-at-startup "google-chrome-stable --profile-directory='Profile 1'"
-// WS2: Terminal + VSCode
+// WS2: Terminal
 spawn-at-startup "alacritty"
-spawn-at-startup "code"
-// WS4: Chrome (default profile)
-spawn-sh-at-startup "sleep 2 && google-chrome-stable --profile-directory=Default"
 // WS3: Gmail | Calendar | Slack | TOKIMEKI | X
 // sleep 5s to let main Chrome establish its singleton before app instances start
 spawn-sh-at-startup "sleep 5 && google-chrome-stable --profile-directory='Profile 1' --app-id=fmgjjmmmlfnkbppncabfkddbjimcfncm"
@@ -361,9 +361,9 @@ window-rule {
     match app-id=r#"^chrome-kjbdgfilnfhdoflbpgamdcdgpehopbep-Profile_1$"#
     default-column-width { proportion 0.5; }
 }
-// WS3: Slack (33% width)
+// WS3: Slack (33% width, sits left of BlueSky)
 window-rule {
-    match app-id="Slack"
+    match app-id="slack"
     default-column-width { proportion 0.33333; }
 }
 // WS3: TOKIMEKI, X (23% width)
