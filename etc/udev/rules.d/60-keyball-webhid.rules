@@ -1,0 +1,2 @@
+# Allow active user access to Keyball44 (Yowkees) HID interface for remap-keys.app / Via via WebHID
+KERNEL=="hidraw*", ATTRS{idVendor}=="5957", ATTRS{idProduct}=="0400", TAG+="uaccess", MODE="0660", GROUP="input"
