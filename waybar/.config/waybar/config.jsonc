@@ -52,7 +52,9 @@
         "hwmon-path": "/sys/class/hwmon/hwmon2/temp1_input"
     },
     "network": {
-        "format-wifi": "{essid} ({signalStrength}%) ",
+        // 物理NICに固定 — dockerブリッジやVPNのルート変動で追跡が外れるのを防ぐ
+        "interface": "enp5s0",
+        "format-wifi":"{essid} ({signalStrength}%) ",
         "format-ethernet": "{ipaddr}/{cidr} ",
         "tooltip-format": "{ifname} via {gwaddr} ",
         "format-linked": "{ifname} (No IP) ",
