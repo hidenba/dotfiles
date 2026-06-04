@@ -71,6 +71,7 @@ snap-pac
 snapper
 steam
 stow
+strongswan
 sudo
 sway
 swaybg

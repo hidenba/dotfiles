@@ -116,9 +116,14 @@ button:hover {
     padding: 0 10px;
 }
 
-#custom-tailscale {
+#custom-tailscale,
+#custom-vpn {
     padding: 0 10px;
     font-family: FiraCode Nerd Font, FontAwesome, Roboto, sans-serif;
+}
+
+#custom-vpn.connected {
+    color: #a6e3a1;
 }
 
 

@@ -9,6 +9,7 @@
         "idle_inhibitor",
         "pulseaudio",
         "network",
+        "custom/vpn",
         "custom/tailscale",
         "group/cpu",
         "group/gpu",
@@ -157,6 +158,12 @@
             "audio": "systemctl --user restart pipewire pipewire-pulse wireplumber && sleep 3 && pactl set-default-source rnnoise_source",
             "network": "sudo systemctl restart systemd-networkd systemd-resolved"
         }
+    },
+    "custom/vpn": {
+        "return-type": "json",
+        "interval": 5,
+        "exec": "$HOME/.local/bin/vpn waybar",
+        "on-click": "$HOME/.local/bin/vpn toggle"
     },
     "custom/tailscale": {
         "return-type": "json",
