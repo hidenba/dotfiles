@@ -1,12 +1,17 @@
 1password
 1password-cli
 claude-code
+devcontainer-cli
+electron40-bin
 elephant-bin
 elephant-nirisessions-bin
 google-chrome
 notion-app-electron
 obs-backgroundremoval
+onlyoffice-bin
 paru
+paru-debug
+proton-cachyos-slr
 slack-desktop
 uhubctl
 upscayl-bin

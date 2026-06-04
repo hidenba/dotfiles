@@ -55,6 +55,7 @@ noto-fonts-emoji
 nvidia-open-dkms
 nvidia-utils
 obs-studio
+obsidian
 openssh
 os-prober
 otf-font-awesome
@@ -87,6 +88,7 @@ unrar
 uv
 v4l2loopback-dkms
 vim
+vulkan-tools
 waybar
 wayvnc
 xarchiver
