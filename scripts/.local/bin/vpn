@@ -1,12 +1,24 @@
 #!/bin/bash
-# strongSwan (IKEv2) VPN control for leafea
+# strongSwan (IKEv2) VPN control for leafea (split tunnel)
 # Usage: vpn {up|down|status|toggle|waybar|idle-check}
 #
-# アイドル自動切断: 監視ドメイン宛のトラフィックをnftablesでカウントし、
-# IDLE_TIMEOUT_MIN分間アクセスがなければ自動でdownする
+# スプリットトンネル: 下記 WATCH_DOMAINS 宛てのみVPN経由にし、それ以外は
+# 通常回線を直接使う。接続のたびにドメインを解決して /24 に集約し、swanctl
+# の remote_ts と nftables(アイドル計測 + MSSクランプ)に反映する。
+#
+# アイドル自動切断: 監視サブネット宛てのトラフィックをnftablesでカウントし、
+# IDLE_TIMEOUT_MIN分間アクセスがなければ自動でdownする。
 
 CONN="leafea"
-WATCH_DOMAIN="stg.internal.fukuri-app.jp"
+CONF="/etc/swanctl/conf.d/leafea.conf"
+# VPN経由が必要な社内ドメイン(増えたらここに足すだけ)
+WATCH_DOMAINS=(
+    stg.internal.fukuri-app.jp
+    stg.ap.fukuri-app.jp
+    stg.fukuri-internal-admin-dev.jp
+)
+# IPsecトンネル越しのHTTPSが固まらないようTCP MSSをクランプする値
+TUNNEL_MSS=1360
 IDLE_TIMEOUT_MIN=5
 STATE_FILE="/tmp/vpn-idle-state"
 WATCH_UNIT="vpn-idle-watch"
@@ -19,23 +31,56 @@ read_counter() {
     sudo nft list counter inet vpnidle hits 2>/dev/null | grep -oP 'packets \K[0-9]+'
 }
 
-idle_watch_start() {
-    # 監視ドメインのIPを解決してカウンタルールを張る(CloudFrontなのでIPは毎回変わりうる)
-    local ips
-    ips=$(getent ahostsv4 "$WATCH_DOMAIN" | awk '{print $1}' | sort -u | paste -sd,)
-    [ -z "$ips" ] && { echo "warn: cannot resolve $WATCH_DOMAIN, idle watch disabled" >&2; return 1; }
+# 全監視ドメインを解決し、重複排除した /24 をカンマ区切りで返す
+# (CloudFront/ALBでIPが変動するため都度解決し /24 単位で吸収する)
+resolve_subnets() {
+    local d
+    for d in "${WATCH_DOMAINS[@]}"; do
+        getent ahostsv4 "$d"
+    done | awk -F'[. ]' 'NF>=4 {print $1"."$2"."$3".0/24"}' | sort -u | paste -sd,
+}
 
+# 監視ドメインの実AAAA(IPv4マップ除く)を /48 に集約して返す。
+# VPNはIPv4のみなのでIPv6だと素通りして拒否される。該当する宛先のIPv6を
+# rejectし、ブラウザをIPv4(=トンネル)へフォールバックさせるために使う。
+resolve_prefixes6() {
+    local d
+    for d in "${WATCH_DOMAINS[@]}"; do
+        getent ahostsv6 "$d"
+    done | awk '{print $1}' | grep -v '::ffff:' \
+        | awk -F: 'NF>=3 {print $1":"$2":"$3"::/48"}' | sort -u | paste -sd,
+}
+
+# nftables: 監視サブネット宛てのアイドル計測カウンタ + MSSクランプ + IPv6遮断
+nft_setup() {
+    local subnets="$1" prefixes6="$2"
     sudo nft -f - <<EOF
 table inet vpnidle
 delete table inet vpnidle
 table inet vpnidle {
     counter hits {}
     chain out {
-        type filter hook output priority 0; policy accept;
-        ip daddr { $ips } counter name hits
+        type filter hook output priority filter; policy accept;
+        ip daddr { $subnets } counter name hits
+    }
+    chain mss {
+        type filter hook output priority mangle; policy accept;
+        ip daddr { $subnets } tcp flags syn tcp option maxseg size set $TUNNEL_MSS
     }
 }
 EOF
+    # 社内ドメインがIPv6を持つ場合のみ、その宛先IPv6をrejectする
+    if [ -n "$prefixes6" ]; then
+        sudo nft add chain inet vpnidle block6 '{ type filter hook output priority filter; policy accept; }'
+        local p
+        IFS=, read -ra _p6 <<< "$prefixes6"
+        for p in "${_p6[@]}"; do
+            sudo nft add rule inet vpnidle block6 ip6 daddr "$p" reject
+        done
+    fi
+}
+
+idle_watch_start() {
     echo "0 $(date +%s)" > "$STATE_FILE"
     systemd-run --user --unit "$WATCH_UNIT" --on-active=60 --on-unit-active=60 \
         "$HOME/.local/bin/vpn" idle-check >/dev/null 2>&1
@@ -48,23 +93,50 @@ idle_watch_stop() {
 }
 
 vpn_up() {
-    # 設定未ロード時(サービス起動直後など)に備えてロード
-    sudo swanctl --list-conns 2>/dev/null | grep -q "^${CONN}:" || sudo swanctl --load-all >/dev/null
-    sudo swanctl --initiate --child "$CONN" >/dev/null 2>&1 && idle_watch_start
+    local subnets prefixes6
+    subnets=$(resolve_subnets)
+    prefixes6=$(resolve_prefixes6)
+    if [ -z "$subnets" ]; then
+        echo "error: 監視ドメインを解決できませんでした" >&2
+        return 1
+    fi
+    # スプリットトンネルの宛先を反映(secret行はそのまま、remote_ts行のみ置換)
+    sudo sed -i "s|remote_ts = .*|remote_ts = $subnets|" "$CONF"
+    sudo swanctl --load-all >/dev/null
+    sudo swanctl --initiate --child "$CONN" >/dev/null 2>&1 || return 1
+
+    # strongSwanは table 220 にソースルート(src=仮想IP)を入れるが、それを
+    # 参照する ip rule を入れてくれない。これが無いと社内宛てもメインテーブルの
+    # 物理IPで素通りし、XFRMポリシー(src=仮想IPのみマッチ)に乗らず拒否される。
+    sudo ip rule del priority 220 2>/dev/null
+    sudo ip rule add from all lookup 220 priority 220
+
+    # strongSwanが resolv.conf をVPNのDNSに書き換えるが、スプリットでは
+    # そのDNSに到達できず全名前解決が死ぬ。社内ドメインは公開DNSで引けるので
+    # stubシンボリックリンクへ戻して通常のDNSを使い続ける。
+    sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+
+    nft_setup "$subnets" "$prefixes6"
+    idle_watch_start
+    echo "routed via VPN: $subnets"
+    [ -n "$prefixes6" ] && echo "blocked IPv6 (force IPv4): $prefixes6"
+    return 0
 }
 
 vpn_down() {
     idle_watch_stop
     sudo swanctl --terminate --ike "$CONN" >/dev/null 2>&1
+    # table 220 参照ルールを撤去
+    sudo ip rule del priority 220 2>/dev/null
     # strongSwanがresolv.confを直接書き換えるのでstubシンボリックリンクを復元
     sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
-    # テーブル220のthrowルート残骸を掃除
+    # テーブル220のルート残骸を掃除
     sudo ip route flush table 220 2>/dev/null
 }
 
 case "$1" in
     up)
-        vpn_up && echo "VPN connected (auto-disconnect after ${IDLE_TIMEOUT_MIN}min idle)"
+        vpn_up && echo "VPN connected (split tunnel, auto-disconnect after ${IDLE_TIMEOUT_MIN}min idle)"
         ;;
     down)
         vpn_down && echo "VPN disconnected"
@@ -82,7 +154,7 @@ case "$1" in
     waybar)
         if is_up; then
             ip=$(sudo swanctl --list-sas | grep -oP '\[\K10\.200\.[0-9.]+' | head -1)
-            printf '{"text": "󰦝 %s", "tooltip": "VPN (%s): %s | Click to disconnect", "class": "connected"}\n' "$ip" "$CONN" "$ip"
+            printf '{"text": "󰦝 %s", "tooltip": "VPN (%s): %s | split tunnel | Click to disconnect", "class": "connected"}\n' "$ip" "$CONN" "$ip"
         else
             printf '{"text": "󰦝 off", "tooltip": "VPN (%s): disconnected | Click to connect", "class": "disconnected"}\n' "$CONN"
         fi

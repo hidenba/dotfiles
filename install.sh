@@ -144,6 +144,7 @@ phase_system() {
         "udev/rules.d/70-uinput.rules"
         "udev/rules.d/50-usb-hub-no-autosuspend.rules"
         "udev/rules.d/60-keyball-webhid.rules"
+        "strongswan.d/charon/resolve.conf"
         "sysctl.d/99-network-tuning.conf"
         "systemd/system/systemd-networkd-wait-online.service.d/override.conf"
         "pacman.d/hooks/nvidia.hook"
