@@ -150,6 +150,8 @@ phase_system() {
         "pacman.d/hooks/nvidia.hook"
         "modules-load.d/v4l2loopback.conf"
         "modules-load.d/uinput.conf"
+        "modules-load.d/hid-logitech.conf"
+        "udev/rules.d/80-logitech-wheel.rules"
         "paru.conf"
     )
 
@@ -234,6 +236,7 @@ phase_services() {
         "snapper-cleanup.timer"
         "systemd-networkd.service"
         "systemd-resolved.service"
+        "systemd-timesyncd.service"
         "sshd.service"
         "tailscaled.service"
         "niri-resume-fix.service"

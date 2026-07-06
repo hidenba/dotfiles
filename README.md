@@ -168,7 +168,7 @@ grub-mkconfig -o /boot/grub/grub.cfg
 > install.sh Phase 3 で `etc/default/grub` を参照できるが、LUKS UUID と `rd.luks.options` (FIDO2) は
 > PC固有なので手動編集が必要。既存の設定をテンプレートとして参考にすること。
 
-##### 9. ネットワーク (systemd-networkd)
+##### 9. ネットワーク・時刻同期 (systemd-networkd)
 
 ```bash
 cat > /etc/systemd/network/20-wired.network << 'EOF'
@@ -179,7 +179,7 @@ Name=en*
 DHCP=yes
 EOF
 
-systemctl enable systemd-networkd systemd-resolved
+systemctl enable systemd-networkd systemd-resolved systemd-timesyncd
 ```
 
 ##### 10. initramfs
