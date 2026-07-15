@@ -1,0 +1,11 @@
+[Desktop Entry]
+# http/https のデフォルトハンドラー。直前にフォーカスしていたブラウザでURLを開く。
+# 実体: ~/.local/bin/browser-dispatch (scripts stowパッケージ)
+Name=Browser Dispatch
+Comment=Open URLs in the most recently focused browser
+Exec=/home/hidenba/.local/bin/browser-dispatch %u
+Type=Application
+Terminal=false
+NoDisplay=true
+Categories=Network;WebBrowser;
+MimeType=x-scheme-handler/http;x-scheme-handler/https;

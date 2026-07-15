@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# browser-dispatch — URLを「今表示されているワークスペース上のブラウザウィンドウ」で開く
+#
+# 仕組み:
+#   1. niriの各出力でアクティブな(=今見えている)ワークスペースにあるブラウザウィンドウを探し、
+#      フォーカス中ワークスペース優先・フォーカスが新しい順で1つ選ぶ
+#   2. Chromeの場合、ウィンドウタイトル(=アクティブタブのタイトル)を各プロファイルの
+#      履歴DB (History) と照合してプロファイルを特定する
+#      ※ ChromeはWaylandコンポジタ経由のアクティベーションをMRU判定に使わないため、
+#        CLIから狙えるのはプロファイル単位まで。--profile-directory を付けて開くと
+#        そのプロファイルで最後に操作したウィンドウ(通常=見えているウィンドウ)にタブが開く
+#   3. 見えているワークスペースにブラウザがなければ、フォーカス中ワークスペースに
+#      新規ウィンドウで開く (FALLBACK_BROWSER)
+#
+# 設定 (任意): ~/.config/browser-dispatch.conf を source する。例:
+#   FORCE_BROWSER=(google-chrome-stable --profile-directory=Default)  # 常にこれで開く
+#   FALLBACK_BROWSER=(firefox --new-window)  # 見えているブラウザがない時
+#
+# 使い方: browser-dispatch [-n|--dry-run] [URL...]
+
+set -u
+
+FALLBACK_BROWSER=(google-chrome-stable --new-window)
+FORCE_BROWSER=()
+CHROME_DIR="$HOME/.config/google-chrome"
+
+conf="${XDG_CONFIG_HOME:-$HOME/.config}/browser-dispatch.conf"
+[[ -r "$conf" ]] && source "$conf"
+
+dry_run=false
+if [[ "${1:-}" == "-n" || "${1:-}" == "--dry-run" ]]; then
+    dry_run=true
+    shift
+fi
+
+launch() {
+    if $dry_run; then
+        echo "launch: $*"
+        exit 0
+    fi
+    exec "$@"
+}
+
+if [[ ${#FORCE_BROWSER[@]} -gt 0 ]]; then
+    launch "${FORCE_BROWSER[@]}" "$@"
+fi
+
+# 今見えているワークスペース上のブラウザウィンドウを1つ選ぶ
+# 出力: "<app_id>\t<title>" (該当なしなら空)
+# PWAウィンドウ (chrome-<extid>-*) はタブを開けないので対象外
+choice=$(
+    jq -rn \
+        --argjson wins "$(niri msg --json windows 2>/dev/null || echo '[]')" \
+        --argjson wss "$(niri msg --json workspaces 2>/dev/null || echo '[]')" '
+        ($wss | map(select(.is_active) | .id)) as $visible |
+        ($wss | map(select(.is_focused) | .id) | first) as $focused |
+        $wins
+        | map(select(.app_id == "firefox" or .app_id == "google-chrome"))
+        | map(select(.workspace_id as $w | $visible | index($w)))
+        | max_by([
+            (if .workspace_id == $focused then 1 else 0 end),
+            (.focus_timestamp.secs // 0),
+            (.focus_timestamp.nanos // 0)
+          ])
+        | if . == null then empty else "\(.app_id)\t\(.title)" end'
+)
+
+if [[ -z "$choice" ]]; then
+    launch "${FALLBACK_BROWSER[@]}" "$@"
+fi
+
+app_id="${choice%%$'\t'*}"
+title="${choice#*$'\t'}"
+
+if [[ "$app_id" == "firefox" ]]; then
+    launch firefox "$@"
+fi
+
+# --- Chrome: タイトルを履歴DBと照合してプロファイル特定 ---
+tab_title="${title% - Google Chrome}"
+tab_title="${tab_title//\'/\'\'}"   # SQL用エスケープ
+
+profile="" best=0
+if command -v sqlite3 >/dev/null && [[ -n "$tab_title" ]]; then
+    for dir in "$CHROME_DIR/Default" "$CHROME_DIR"/Profile*; do
+        [[ -f "$dir/History" ]] || continue
+        ts=$(sqlite3 "file:$dir/History?immutable=1&mode=ro" \
+            "SELECT COALESCE(MAX(last_visit_time), 0) FROM urls WHERE title = '$tab_title'" 2>/dev/null)
+        if [[ "${ts:-0}" -gt "$best" ]]; then
+            best="$ts"
+            profile="${dir##*/}"
+        fi
+    done
+fi
+
+$dry_run && echo "target: title=[$tab_title] profile=[${profile:-unknown}]"
+
+if [[ -n "$profile" ]]; then
+    launch google-chrome-stable --profile-directory="$profile" "$@"
+else
+    # プロファイル不明 (新規タブ等) — Chromeのデフォルト挙動に任せる
+    launch google-chrome-stable "$@"
+fi

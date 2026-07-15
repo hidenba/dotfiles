@@ -39,6 +39,7 @@ grub
 grub-btrfs
 imagemagick
 intel-ucode
+jq
 less
 libfido2
 linux
@@ -70,6 +71,7 @@ python-websockets
 ripgrep
 snap-pac
 snapper
+sqlite
 steam
 stow
 strongswan
@@ -91,6 +93,7 @@ vim
 vulkan-tools
 waybar
 wayvnc
+wl-clipboard
 xarchiver
 xdg-desktop-portal-gnome
 xorg-xlsclients

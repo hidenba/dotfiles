@@ -288,6 +288,13 @@ phase_postinstall() {
     sudo usermod -aG input,docker "$USER"
     ok "Added $USER to input, docker groups (re-login required)"
 
+    # Default browser: open URLs in the most recently focused browser window
+    if xdg-settings set default-web-browser browser-dispatch.desktop 2>/dev/null; then
+        ok "Default browser set to browser-dispatch"
+    else
+        warn "Could not set default browser (run manually: xdg-settings set default-web-browser browser-dispatch.desktop)"
+    fi
+
     echo ""
     warn "=== Manual steps remaining ==="
     echo "  1. Register YubiKey for PAM:  pamu2fcfg > ~/.config/Yubico/u2f_keys"
