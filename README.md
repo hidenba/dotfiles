@@ -36,6 +36,8 @@ Arch Linux (Niri/Wayland) 環境の設定ファイル管理リポジトリ。
 ├── wayland-flags/      # Chrome/Electron Waylandフラグ
 ├── git/                # global gitignore
 ├── systemd-user/       # ユーザーサービス
+├── environment.d/      # セッション環境変数 (Claude Bedrock設定)
+├── desktop-entries/    # .desktop オーバーライド (claude-desktop)
 ├── scripts/            # ~/.local/bin/ カスタムスクリプト
 ├── etc/                # /etc/ システム設定 (Stow対象外)
 ├── wallpaper/          # 壁紙 (デスクトップ、ロック画面、ログイン画面)
@@ -522,3 +524,25 @@ mount -o subvolid=5 /dev/mapper/vg-root /mnt
 
 - `fstab`, `grub` のUUIDはPC固有 → install.shではスキップ、手動設定
 - OBSのシーン/プロファイルは追跡しない（ランタイム状態）
+
+## Claude Code / Claude Desktop via AWS Bedrock
+
+Bedrock経由でClaudeを使うための環境変数を2系統で設定している:
+
+| 場所 | 対象 | 内容 |
+|------|------|------|
+| `shell/.zshenv` | シェル (ターミナル, SSH, スクリプト) | `CLAUDE_CODE_USE_BEDROCK` 等の非シークレット + `~/.zshenv.local` をsource |
+| `environment.d/` | GUIセッション (niri.service配下の全アプリ = Claude Desktop等) | 同上の非シークレット。systemd user managerが読む |
+
+**APIキー (シークレット) はGit管理外**。新PC復旧時は以下を手動で作成する:
+
+```bash
+# シェル用 (chmod 600)
+echo 'export AWS_BEARER_TOKEN_BEDROCK=<キー>' > ~/.zshenv.local
+
+# GUIセッション用 (chmod 600)
+echo 'AWS_BEARER_TOKEN_BEDROCK=<キー>' > ~/.config/environment.d/60-bedrock-secret.conf
+```
+
+キーは本人専用（共有NG）。有効期限あり — 失効・紛失時は発行者にDMで再発行を依頼する。
+environment.d の変更はセッション再ログインで反映される。
