@@ -21,6 +21,9 @@ fcitx5/.config/fcitx5/conf/cached_layouts
 # Runtime data / state (not portable)
 scripts/.local/share/
 scripts/.local/state/
+
+# Downloaded binaries (not config, install separately)
+scripts/.local/bin/stripe
 systemd-user/.config/systemd/user/default.target.wants/
 
 # Screenshots

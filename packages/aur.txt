@@ -1,11 +1,14 @@
 1password
 1password-cli
 claude-code
+claude-desktop-bin
 devcontainer-cli
 electron40-bin
 elephant-bin
 elephant-nirisessions-bin
 google-chrome
+herdr-bin
+new-lg4ff-dkms-git
 notion-app-electron
 obs-backgroundremoval
 onlyoffice-bin
