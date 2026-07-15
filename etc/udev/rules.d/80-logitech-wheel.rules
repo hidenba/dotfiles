@@ -1,0 +1,20 @@
+# Logitech G923 - ensure hid-logitech (new-lg4ff) loads when wheel is attached
+# c267 = PS4 compatibility mode on connect; driver switches it to c266 (PC native mode)
+ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c267", \
+    RUN+="/usr/bin/modprobe hid-logitech"
+ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c266", \
+    RUN+="/usr/bin/modprobe hid-logitech"
+
+# Disable USB autosuspend for G923 - wheel resets to PS4 mode (c267) on suspend
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="046d", ATTR{idProduct}=="c267", \
+    ATTR{power/control}="on"
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="046d", ATTR{idProduct}=="c266", \
+    ATTR{power/control}="on"
+
+# Allow input group to access G923 hidraw interface
+# Wine/Proton's Windows.Gaming.Input reads /dev/hidraw* directly
+# TAG+="uaccess" is required for Steam's pressure-vessel to pass the device into the container
+KERNEL=="hidraw*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c266", \
+    MODE="0660", GROUP="input", TAG+="uaccess"
+KERNEL=="hidraw*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c267", \
+    MODE="0660", GROUP="input", TAG+="uaccess"
