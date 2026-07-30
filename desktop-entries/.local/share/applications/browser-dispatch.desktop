@@ -8,4 +8,4 @@ Type=Application
 Terminal=false
 NoDisplay=true
 Categories=Network;WebBrowser;
-MimeType=x-scheme-handler/http;x-scheme-handler/https;
+MimeType=x-scheme-handler/unknown;x-scheme-handler/about;text/html;x-scheme-handler/http;x-scheme-handler/https;
