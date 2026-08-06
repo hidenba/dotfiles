@@ -1,0 +1,17 @@
+# AQC113 (atlantic) はサスペンド復帰時の aq_ring_alloc がメモリ断片化で
+# ENOMEM になり NIC が復帰しないことがある (復帰処理中はメモリ回収が制限されるため)。
+# サスペンド前にモジュールをアンロードし、復帰後にリロードして通常コンテキストで
+# リング確保をやり直す。
+[Unit]
+Description=Reload atlantic NIC driver around suspend (resume ENOMEM workaround)
+Before=sleep.target
+StopWhenUnneeded=yes
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/modprobe -r atlantic
+ExecStop=/usr/bin/modprobe atlantic
+
+[Install]
+WantedBy=sleep.target

@@ -139,6 +139,7 @@ phase_system() {
         "pam.d/polkit-1"
         "systemd/network/20-wired.network"
         "systemd/system/niri-resume-fix.service"
+        "systemd/system/atlantic-suspend-fix.service"
         "systemd/system/greetd.service.d/nvidia-drm-wait.conf"
         "udev/rules.d/99-network-tuning.rules"
         "udev/rules.d/70-uinput.rules"
@@ -240,6 +241,7 @@ phase_services() {
         "sshd.service"
         "tailscaled.service"
         "niri-resume-fix.service"
+        "atlantic-suspend-fix.service"
     )
 
     local user_services=(
