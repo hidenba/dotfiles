@@ -1,0 +1,8 @@
+{
+  "inferenceProvider": "bedrock",
+  "inferenceBedrockRegion": "ap-northeast-1",
+  "inferenceCredentialKind": "helper-script",
+  "inferenceCredentialHelper": "/home/hidenba/.local/bin/claude-bedrock-cred",
+  "inferenceCredentialHelperTtlSec": 3600,
+  "modelDiscoveryEnabled": true
+}

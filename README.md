@@ -37,7 +37,7 @@ Arch Linux (Niri/Wayland) 環境の設定ファイル管理リポジトリ。
 ├── git/                # global gitignore
 ├── systemd-user/       # ユーザーサービス
 ├── environment.d/      # セッション環境変数 (Claude Bedrock設定)
-├── desktop-entries/    # .desktop オーバーライド (claude-desktop)
+├── desktop-entries/    # .desktop オーバーライド (claude-desktop, browser-dispatch)
 ├── scripts/            # ~/.local/bin/ カスタムスクリプト
 ├── etc/                # /etc/ システム設定 (Stow対象外)
 ├── wallpaper/          # 壁紙 (デスクトップ、ロック画面、ログイン画面)
@@ -531,8 +531,15 @@ Bedrock経由でClaudeを使うための環境変数を2系統で設定してい
 
 | 場所 | 対象 | 内容 |
 |------|------|------|
-| `shell/.zshenv` | シェル (ターミナル, SSH, スクリプト) | `CLAUDE_CODE_USE_BEDROCK` 等の非シークレット + `~/.zshenv.local` をsource |
-| `environment.d/` | GUIセッション (niri.service配下の全アプリ = Claude Desktop等) | 同上の非シークレット。systemd user managerが読む |
+| `shell/.zshenv` | シェル (ターミナル, SSH, スクリプト) | `CLAUDE_CODE_USE_BEDROCK`, `AWS_REGION`, モデル指定 + `~/.zshenv.local` をsource |
+| `environment.d/` | GUIセッション (niri.service配下の全アプリ) | `CLAUDE_CODE_USE_BEDROCK`, `AWS_REGION` のみ。systemd user managerが読む |
+
+> **モデル指定 (`ANTHROPIC_MODEL` / `ANTHROPIC_DEFAULT_*_MODEL`) は `environment.d/` に置かない。**
+> Desktop 内の Code セッションはアプリのモデル選択が優先され (3Pモードではホストが
+> `ANTHROPIC_DEFAULT_*_MODEL` を空にして managed-settings / discovery の結果で入れ直す)、
+> ターミナル用は `shell/.zshenv` にあるので、ここに置いても効かない。
+> `environment.d/` 自体を残しているのは、`claude-code-url-handler.desktop` のように
+> zshを経由せず起動される `claude` にも Bedrock 設定を届けるため。
 
 **APIキー (シークレット) はGit管理外**。新PC復旧時は以下を手動で作成する:
 
@@ -546,3 +553,56 @@ echo 'AWS_BEARER_TOKEN_BEDROCK=<キー>' > ~/.config/environment.d/60-bedrock-se
 
 キーは本人専用（共有NG）。有効期限あり — 失効・紛失時は発行者にDMで再発行を依頼する。
 environment.d の変更はセッション再ログインで反映される。
+
+### Claude Desktop を Bedrock で動かす (3Pモード)
+
+上記の環境変数が効く範囲は「Claude Code のプロセス」まで。Desktop 内の Code セッションも
+セッションenvを継承するので、標準モードのままでも推論は Bedrock に飛んでいる
+(`CLAUDE_CODE_USE_BEDROCK=1` は標準モードでは削除されない。同時に注入される
+`ANTHROPIC_BASE_URL` / `CLAUDE_CODE_OAUTH_TOKEN` は Bedrock モードでは参照されない)。
+
+**環境変数が効かないのは Desktop 本体 (Chat / Cowork) の推論** — こちらはアプリが
+claude.ai OAuth で直接叩くので Claudeプラン側の課金になる。ここも Bedrock にするには **Claude Desktop on 3P** (third-party inference) という
+公式のデプロイモードに切り替える。Linuxでは `/etc/claude-desktop/managed-settings.json`
+で設定する ([公式ドキュメント](https://claude.com/docs/third-party/claude-desktop))。
+
+| ファイル | 役割 |
+|---------|------|
+| `etc/claude-desktop/managed-settings.json` | 3P設定本体 (provider=bedrock, region, ヘルパー指定)。install.sh Phase 3 でコピー |
+| `scripts/.local/bin/claude-bedrock-cred` | ベアラートークンをstdoutに出す認証ヘルパー |
+
+`managed-settings.json` は root所有・**他ユーザーからも読める** (0644) 必要があるので、
+トークンを直接書かず `inferenceCredentialKind: "helper-script"` でヘルパー経由にしている。
+ヘルパーは 0600 の `~/.config/environment.d/60-bedrock-secret.conf` からキーを読む。
+
+**要件** (満たさないと設定が丸ごと無視される):
+
+- `/etc/claude-desktop/` と `managed-settings.json` が root所有、group/other書き込み不可
+- シンボリックリンク不可 (Stow対象外にしている理由)
+- モデルは `modelDiscoveryEnabled: true` で Bedrock から自動取得
+  (`ap-northeast-1` では `global.anthropic.claude-opus-5` 等が列挙される)
+
+**3Pモードの制約** — 標準のDesktopとは別モードなので以下が変わる:
+
+| | 標準 (claude.ai) | 3P (Bedrock) |
+|---|---|---|
+| ユーザーデータ | `~/.config/Claude` | `~/.config/Claude-3p` (別プロファイル) |
+| 認証 | Anthropicアカウント | ローカルデバイスのみ |
+| 会話履歴 | claude.ai と同期 | ローカルディスクのみ |
+| 課金 | Claudeプラン | Bedrock (AWS) |
+
+Chat / Cowork / Code は3Pでも全部使える。切り替えはアプリ再起動後のサインイン画面で
+選択する（Anthropicサインインを選べば標準モードに戻る。既存プロファイルは消えない）。
+標準モードに完全に戻すには `/etc/claude-desktop/managed-settings.json` を削除する。
+
+**確認方法**: Desktop の Help → Troubleshooting → Copy Managed Configuration Report で
+どのキーが読まれたか・認証が通ったかが分かる。ログは `~/.config/Claude-3p/logs/main.log` で、
+成功時は次のように出る:
+
+```
+[custom-3p] Credentials loaded from managed config { provider: 'bedrock', ... }
+[custom-3p] 3P mode active { provider: 'bedrock' }
+[custom-3p] running helper { helperPath: '.../claude-bedrock-cred' }
+[custom-3p] helper ok (elapsed=13ms stdoutBytes=136)
+[custom-3p] Model discovery: 21 found in 872ms; picker = 21 (discovery)
+```
