@@ -1,5 +1,5 @@
 [Desktop Entry]
-# User override of /usr/share/applications/claude-desktop.desktop (claude-desktop-bin).
+# User override of /usr/share/applications/com.anthropic.Claude.desktop (claude-desktop-bin).
 # Adds --password-store=gnome-libsecret so Electron uses gnome-keyring for safeStorage.
 # Without it, Chromium can't recognize XDG_CURRENT_DESKTOP=niri and falls back to
 # backend=basic_text -> tokens can't persist -> OAuth session_stale_relogin ->
@@ -12,7 +12,7 @@ Exec=/usr/bin/claude-desktop --password-store=gnome-libsecret %U
 Icon=claude-desktop
 Type=Application
 StartupNotify=true
-StartupWMClass=claude-desktop
+StartupWMClass=com.anthropic.Claude
 SingleMainWindow=true
 Categories=Utility;Development;
 MimeType=x-scheme-handler/claude;
