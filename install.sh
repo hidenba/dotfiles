@@ -154,7 +154,6 @@ phase_system() {
         "modules-load.d/hid-logitech.conf"
         "udev/rules.d/80-logitech-wheel.rules"
         "paru.conf"
-        "claude-desktop/managed-settings.json"
     )
 
     # System-wide configs - show diff but don't auto-copy (may need manual merge)
