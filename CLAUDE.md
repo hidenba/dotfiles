@@ -29,7 +29,6 @@ GNU Stowによるdotfiles管理リポジトリ。Arch Linux + Niri (Wayland) 環
 | `wayland-flags/` | `~/.config/` | Chrome/Electron/Slack/Notion Waylandフラグ |
 | `git/` | `~/.config/git/` | global ignore |
 | `systemd-user/` | `~/.config/systemd/user/` | obs-meet-bridge.service |
-| `environment.d/` | `~/.config/environment.d/` | セッション環境変数 (Claude Bedrock設定。キー本体はGit外の `60-bedrock-secret.conf`) |
 | `desktop-entries/` | `~/.local/share/applications/` | com.anthropic.Claude.desktop (gnome-libsecretフラグ付きオーバーライド), browser-dispatch.desktop (http/httpsハンドラー) |
 | `scripts/` | `~/.local/bin/` | カスタムスクリプト群 |
 

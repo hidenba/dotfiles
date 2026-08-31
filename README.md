@@ -36,7 +36,6 @@ Arch Linux (Niri/Wayland) 環境の設定ファイル管理リポジトリ。
 ├── wayland-flags/      # Chrome/Electron Waylandフラグ
 ├── git/                # global gitignore
 ├── systemd-user/       # ユーザーサービス
-├── environment.d/      # セッション環境変数 (Claude Bedrock設定)
 ├── desktop-entries/    # .desktop オーバーライド (claude-desktop, browser-dispatch)
 ├── scripts/            # ~/.local/bin/ カスタムスクリプト
 ├── etc/                # /etc/ システム設定 (Stow対象外)
@@ -524,50 +523,3 @@ mount -o subvolid=5 /dev/mapper/vg-root /mnt
 
 - `fstab`, `grub` のUUIDはPC固有 → install.shではスキップ、手動設定
 - OBSのシーン/プロファイルは追跡しない（ランタイム状態）
-
-## Claude Code / Claude Desktop via AWS Bedrock
-
-Bedrock経由でClaudeを使うための環境変数を2系統で設定している:
-
-| 場所 | 対象 | 内容 |
-|------|------|------|
-| `shell/.zshenv` | シェル (ターミナル, SSH, スクリプト) | `CLAUDE_CODE_USE_BEDROCK`, `AWS_REGION`, モデル指定 + `~/.zshenv.local` をsource |
-| `environment.d/` | GUIセッション (niri.service配下の全アプリ) | `CLAUDE_CODE_USE_BEDROCK`, `AWS_REGION` のみ。systemd user managerが読む |
-
-> **モデル指定 (`ANTHROPIC_MODEL` / `ANTHROPIC_DEFAULT_*_MODEL`) は `environment.d/` に置かない。**
-> Desktop 内の Code セッションはアプリのモデル選択が優先され、
-> ターミナル用は `shell/.zshenv` にあるので、ここに置いても効かない。
-> `environment.d/` 自体を残しているのは、`claude-code-url-handler.desktop` のように
-> zshを経由せず起動される `claude` にも Bedrock 設定を届けるため。
-
-**APIキー (シークレット) はGit管理外**。新PC復旧時は以下を手動で作成する:
-
-```bash
-# シェル用 (chmod 600)
-echo 'export AWS_BEARER_TOKEN_BEDROCK=<キー>' > ~/.zshenv.local
-
-# GUIセッション用 (chmod 600)
-echo 'AWS_BEARER_TOKEN_BEDROCK=<キー>' > ~/.config/environment.d/60-bedrock-secret.conf
-```
-
-キーは本人専用（共有NG）。有効期限あり — 失効・紛失時は発行者にDMで再発行を依頼する。
-environment.d の変更はセッション再ログインで反映される。
-
-### Claude Desktop 本体 (Chat / Cowork) は claude.ai
-
-上記の環境変数が効く範囲は「Claude Code のプロセス」まで。Desktop 内の Code セッションも
-セッションenvを継承するので、推論は Bedrock に飛ぶ
-(`CLAUDE_CODE_USE_BEDROCK=1` は標準モードでも削除されない。同時に注入される
-`ANTHROPIC_BASE_URL` / `CLAUDE_CODE_OAUTH_TOKEN` は Bedrock モードでは参照されない)。
-
-**Desktop 本体 (Chat / Cowork) の推論は claude.ai OAuth** — Claudeプラン側の課金になる。
-環境変数では変えられない。
-
-以前は Bedrock に寄せるため **Claude Desktop on 3P** (third-party inference,
-`/etc/claude-desktop/managed-settings.json`) を入れていたが、標準モードに戻した。
-3Pモードは別プロファイル (`~/.config/Claude-3p`)・ローカル認証・履歴非同期になるため、
-claude.ai の会話履歴とアカウント同期を優先している。
-
-再び 3P にする場合は commit `2a7652c` の `etc/claude-desktop/managed-settings.json` と
-`scripts/.local/bin/claude-bedrock-cred` を復元する
-([公式ドキュメント](https://claude.com/docs/third-party/claude-desktop))。
