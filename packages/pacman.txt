@@ -11,6 +11,7 @@ bluez-utils
 btrfs-progs
 cage
 cpupower
+darktable
 docker
 docker-compose
 drawing
@@ -32,6 +33,7 @@ git
 git-delta
 github-cli
 gnome-keyring
+goobox
 greetd
 greetd-regreet
 greetd-tuigreet
@@ -57,6 +59,7 @@ nvidia-open-dkms
 nvidia-utils
 obs-studio
 obsidian
+opencl-nvidia
 openssh
 os-prober
 otf-font-awesome
@@ -68,12 +71,14 @@ pipewire-pulse
 polkit-gnome
 python-pillow
 python-websockets
+qrencode
 ripgrep
 snap-pac
 snapper
 sqlite
 steam
 stow
+strawberry
 strongswan
 sudo
 sway
