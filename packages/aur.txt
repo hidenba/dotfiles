@@ -1,7 +1,7 @@
 1password
 1password-cli
 claude-code
-claude-desktop-bin
+claude-desktop
 devcontainer-cli
 electron40-bin
 elephant-bin
@@ -15,8 +15,10 @@ onlyoffice-bin
 paru
 paru-debug
 proton-cachyos-slr
+python-pkg_resources
 slack-desktop
 uhubctl
 upscayl-bin
 visual-studio-code-bin
+wlroots0.19
 xremap-niri-bin
