@@ -29,6 +29,9 @@ systemd-user/.config/systemd/user/default.target.wants/
 # Screenshots
 wallpaper/Pictures/Screenshots/
 
+# darktable RAW exports (large originals, not config)
+wallpaper/Pictures/darktable_exported/
+
 # Editor backups
 *~
 *.swp
