@@ -117,6 +117,7 @@ button:hover {
 }
 
 #custom-tailscale,
+#custom-sleep-lock,
 #custom-vpn {
     padding: 0 10px;
     font-family: FiraCode Nerd Font, FontAwesome, Roboto, sans-serif;
@@ -124,6 +125,14 @@ button:hover {
 
 #custom-vpn.connected {
     color: #a6e3a1;
+}
+
+#custom-sleep-lock.active {
+    color: #f9e2af;
+}
+
+#custom-sleep-lock.off {
+    color: #ffffff;
 }
 
 

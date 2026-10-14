@@ -11,6 +11,7 @@
         "network",
         "custom/vpn",
         "custom/tailscale",
+        "custom/sleep-lock",
         "group/cpu",
         "group/gpu",
         "custom/weather",
@@ -172,6 +173,13 @@
         "interval": 5,
         "exec": "$HOME/.local/bin/tailscale-waybar",
         "on-click": "tailscale status >/dev/null 2>&1 && tailscale down || tailscale up"
+    },
+    "custom/sleep-lock": {
+        "return-type": "json",
+        "interval": 5,
+        "exec": "$HOME/.local/bin/sleep-lock",
+        "on-click": "$HOME/.local/bin/sleep-lock toggle; pkill -RTMIN+9 waybar",
+        "signal": 9
     },
     "custom/keylight": {
         "format": " {}",

@@ -1,0 +1,21 @@
+#!/bin/bash
+# Waybar custom module: manual sleep lock toggle
+
+unit=sleep-lock.service
+
+case "$1" in
+    toggle)
+        if systemctl --user is-active --quiet "$unit"; then
+            systemctl --user stop "$unit"
+        else
+            systemctl --user start "$unit"
+        fi
+        ;;
+    *)
+        if systemctl --user is-active --quiet "$unit"; then
+            printf '{"text": "󰌾", "tooltip": "Sleep lock: on | Click to disable", "class": "active"}\n'
+        else
+            printf '{"text": "󰌿", "tooltip": "Sleep lock: off | Click to enable", "class": "off"}\n'
+        fi
+        ;;
+esac

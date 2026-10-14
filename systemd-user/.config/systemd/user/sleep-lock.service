@@ -1,0 +1,6 @@
+[Unit]
+Description=Manual sleep lock (toggled from waybar)
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/systemd-inhibit --what=sleep --who=sleep-lock --why="Manual sleep lock" --mode=block sleep infinity
