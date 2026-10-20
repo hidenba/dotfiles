@@ -16,6 +16,7 @@ WATCH_DOMAINS=(
     stg.internal.fukuri-app.jp
     stg.ap.fukuri-app.jp
     stg.fukuri-internal-admin-dev.jp
+    ap.fukuri-app.jp
 )
 # IPsecトンネル越しのHTTPSが固まらないようTCP MSSをクランプする値
 TUNNEL_MSS=1360
